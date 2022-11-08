@@ -2,7 +2,7 @@
 import {Point, Vector2, Vector3} from "./point"
 import { Polygon } from "./poloygon";
 import { Edge } from "./edge";
-
+import {Barycentric} from './math'
 
 interface ImageData{
     data:Uint8ClampedArray,
@@ -10,7 +10,7 @@ interface ImageData{
     height:number,
     colorSpace:string
 }
-export const DrawLine = (ctx:any,beginPoint:Point,endPoint:Point,color:string )=>{
+export const DrawLine = (ctx:any,beginPoint:Point,endPoint:Point,color:Vector3 )=>{
     ctx.beginPath();
     ctx.moveTo(beginPoint.X, beginPoint.Y);
     ctx.lineTo(endPoint.X, endPoint.Y);
@@ -19,7 +19,7 @@ export const DrawLine = (ctx:any,beginPoint:Point,endPoint:Point,color:string )=
     ctx.closePath();
 }
 
-export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:Point,color:string):void=>{
+export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:Point,color:Vector3):void=>{
     let temp = null;
     let m, x, y = 0;
     let e = -0.5;
@@ -125,37 +125,71 @@ export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:
 }
 
 
-const DrawPoint = (imgData:ImageData,x:number,y:number,color:string)=>{
-    // console.log(x,y)
+const DrawPoint = (imgData:ImageData,x:number,y:number,color:Vector3)=>{
+    
+    
     var pixelData = imgData.data;
     if (x > imgData.width || x < 0 || y > imgData.height || y < 0){
         return;
     }
+
     x = Math.floor(x);
     y = Math.floor(y);
     const pixelIndex = (x+y*imgData.width)*4;
-    pixelData[pixelIndex+0] = 0
-    pixelData[pixelIndex+1] = 0
-    pixelData[pixelIndex+2] = 0
+    
+    pixelData[pixelIndex+0] = color.X;
+    pixelData[pixelIndex+1] = color.Y;
+    pixelData[pixelIndex+2] = color.Z;
     pixelData[pixelIndex+3] = 255;
 
 }
 
-const MAX_DEEP = 9999;
-const MIN_DEEP = 1e-9;
-export const DrawTriangleByEdgeTablePolygon = (imgData:ImageData,pointArray:Array<Point>,color:string)=>{
+
+
+
+
+const MAX_DEEP = 999;
+const MIN_DEEP = -999;
+
+
+
+export const DrawTriangleWithZBuffer = (zbuffer:Array<number>,imgData:ImageData,pointArray:Array<Vector3>,color:Vector3)=>{
+    let deepMax:Vector2 = new Vector2(MIN_DEEP,MIN_DEEP);
+    let deepMin:Vector2 = new Vector2(MAX_DEEP,MAX_DEEP);
+    let clamp = new Vector2(imgData.width-1,imgData.height-1);
+    for (let i=0; i<3; i++) {
+        for (let j=0; j<2; j++) {
+            deepMin[j] = Math.max(0,      Math.min(deepMin[j], Math.floor(pointArray[i][j])));
+            deepMax[j] = Math.min(clamp[j], Math.max(deepMax[j], Math.floor(pointArray[i][j])));
+        }
+    }
+
+    let P:Vector3 = new Vector3(0,0,0);
+    for (P.X=deepMin.X; P.X<=deepMax.X; P.X++) {
+
+        for (P.Y=deepMin.Y; P.Y<=deepMax.Y; P.Y++) {
+
+            let bcScreen:Vector3  = Barycentric(pointArray[0], pointArray[1], pointArray[2], P);
+
+            if (bcScreen.X<0 || bcScreen.Y<0 || bcScreen.Z<0) continue;
+            P.Z = 0;
+            for (let i=0; i<3; i++) P.Z += pointArray[i][2]*bcScreen[i];
+            if (zbuffer[Math.floor(P.X+P.Y* imgData.width)]<P.Z) {
+                zbuffer[Math.floor(P.X+P.Y* imgData.width)] = P.Z;
+                DrawPoint(imgData,P.X,P.Y,color);
+            }
+            
+        }
+    }
+}
+
+
+
+
+
+export const DrawTriangleByEdgeTablePolygon = (imgData:ImageData,pointArray:Array<Point>,color:Vector3)=>{
     // EdgeTablePolygon.
     // check amount of point.
-    // let deepMax:Vector2 = new Vector2(MAX_DEEP,MAX_DEEP);
-    // let deepMin:Vector2 = new Vector2(MIN_DEEP,MIN_DEEP);
-    // let clamp = new Vector2(imgData.width-1,imgData.height-1);
-    // for (let i=0; i<3; i++) {
-    //     for (let j=0; j<2; j++) {
-    //         deepMin[j] = Math.max(0,      Math.min(deepMin[j], pts[i][j]));
-    //         deepMax[j] = Math.min(clamp[j], Math.max(deepMax[j], pts[i][j]));
-    //     }
-    // }
-
     
     const points = new Polygon(pointArray);
 
