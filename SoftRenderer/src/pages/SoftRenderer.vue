@@ -1,23 +1,32 @@
 <template>
     <div id="SoftRenderer">
-        <canvas ref="canvas" width="800" height="800"/>
+        <canvas class="show" ref="canvas" width="800" height="800"/>
+        <canvas class="textureCanvas" ref="texture" width="1024" height="1024">
+        </canvas>
     </div>
 </template>
 <script lang="ts">
 import { defineComponent, reactive, ref,onMounted} from 'vue';
 import { Model } from '../classes/model';
-import { DrawLineByBresenham,DrawTriangleByEdgeTablePolygon,DrawTriangle,DrawLine,DrawTriangleWithZBuffer} from '../classes/utils';
+import { DrawLineByBresenham,DrawTriangleByEdgeTablePolygon,
+    DrawTriangle,DrawLine,DrawTriangleWithZBuffer,DrawTriangleWithUV,
+    DrawPoint,getDiffuseByUV
+} from '../classes/utils';
 import { Point, Vector2, Vector3 } from '../classes/point';
 import {vectorMultiply,vectorSubtract,vectorNormalize,vectorCross,
         perspective,degToRad,lookAt,inverse,matrixMutiply,v2m,m2v,
-        getTransformMatrix,mat4MutVec4
+        getTransformMatrix,mat4MutVec4,
     
     } from '../classes/math'
+
+import diffuse from "../../static/texture/diffuse.png"
 
 export default defineComponent({
   name: 'SoftRenderer',
   setup(){
+    const texture = ref<HTMLCanvasElement | any>();
     const canvas = ref<HTMLCanvasElement | any>();
+
     const model = ref<Model>(new Model(""));
     const MAX_DEEP = 999;
     const MIN_DEEP = -999;
@@ -42,6 +51,8 @@ export default defineComponent({
     }
 
     onMounted(()=>{
+
+
         if (canvas == null){
             console.log("Canvas not found!");
             return;
@@ -62,8 +73,8 @@ export default defineComponent({
         )
         const worldToScreen = (point:Vector3):Vector3=>{
             return new Vector3(
-                (point.X + 1.) * canvas.value.width / 4,
-                (point.Y + 2.) * canvas.value.height / 4,
+                Math.floor((point.X + 1.) * canvas.value.width / 4),
+                Math.floor((point.Y + 2.) * canvas.value.height / 4),
                 point.Z
             )
         }
@@ -71,6 +82,100 @@ export default defineComponent({
         let viewMatrix = inverse(cameraMatrix);
         let viewProjectionMatrix = matrixMutiply(viewMatrix,projectionMatrix);
         let modelMatrix = getTransformMatrix(transform);
+        const ctx2 = texture.value.getContext('2d');
+        const img = new Image();
+        img.src = diffuse;
+        img.onload = ()=>{
+            ctx2?.drawImage(img,0,0);
+            // Draw with UV.
+            model.value.getModel(texture.value).then(()=>{
+                for (let i=0; i< model.value.faces.length; i++) {
+                    let screenCoords:Array<Vector3> = []; let worldCoords:Array<Vector3> = [];
+                    let texCoord:Array<Vector2> = [];
+                    let normal:Array<Vector3> = [];
+                    for (let j =0; j < 3; j++){
+                        let point = model.value.vertIndex(
+                            model.value.faces[i][j] - 1
+                        );
+  
+                        worldCoords.push(point);
+                        texCoord.push(
+                            model.value.texCoord[
+                                model.value.facetTex[i*3+j] - 1
+                            ]
+                        );
+                    
+                        normal.push(
+                            model.value.norms[
+                                model.value.faces[i][j] - 1
+                            ]
+                        )
+                        point = m2v(matrixMutiply(viewProjectionMatrix,v2m(point)));
+                        point = m2v(matrixMutiply(modelMatrix,v2m(point)));
+                        point = worldToScreen(point);
+
+                        screenCoords.push(point)
+
+                    }
+                    // caculate normal.
+                    // let normal:Vector3 = vectorCross(
+                    //     vectorSubtract(worldCoords[1],worldCoords[0]),
+                    //     vectorSubtract(worldCoords[2],worldCoords[0])
+                    // )
+                    let lightDir = new Vector3(0,0,1);
+                    let intensity:Array<number> = [];
+                    normal.forEach(e=>{
+                        e = vectorNormalize(e);
+                        intensity.push(
+                            vectorMultiply(e,lightDir)
+                        )
+                    })
+
+
+                    DrawTriangleWithUV(
+                        model.value,
+                        intensity,
+                        zbuffer,
+                        imgData,
+                        screenCoords[0],
+                        screenCoords[1],
+                        screenCoords[2],
+                        intensity[0],
+                        intensity[1],
+                        intensity[2],
+                        texCoord[0],
+                        texCoord[1],
+                        texCoord[2],
+                        );
+
+
+                }
+                console.log("OVER");
+                ctx?.putImageData(imgData,0,0);
+
+
+            })
+
+
+            // test.
+            // model.value.getModel(texture.value).then(()=>{
+            //     for (let i = 0.001; i < 1.; i += 0.001){
+            //         for (let j = 0.001; j < 1.; j += 0.001){
+            //             let color = getDiffuseByUV(model.value,new Vector2(i,j));
+            //             DrawPoint(imgData,i*400,j*400,color);
+            //         }
+            //     }
+            //     ctx?.putImageData(imgData,0,0);
+
+            // })
+
+
+
+
+        }
+
+
+
 
         //Draw Lines.
         // model.value.getModel().then(()=>{
@@ -116,7 +221,7 @@ export default defineComponent({
         //     ctx?.putImageData(imgData,0,0);
         // })
 
-        // model.value.getModel().then(()=>{
+        // model.value.getModel(texture.value).then(()=>{
         //     for (let i=0; i< model.value.faces.length; i++) {
         //         let points:Array<Point> = [];
 
@@ -125,19 +230,18 @@ export default defineComponent({
         //                 model.value.faces[i][j] - 1
         //             );
         //             points.push(new Point(
-        //                 Math.round((point.X + 1.) * canvas.value.width / 4),
-        //                Math.round((point.Y + 2.) * canvas.value.height / 4),
+        //                 Math.floor((point.X + 1.) * canvas.value.width / 4),
+        //                Math.floor((point.Y + 2.) * canvas.value.height / 4),
         //             ))
         //         }
-        //         console.log(points)
         //         DrawTriangle(imgData,points[0],points[1],points[2]);
         //     }
         //     ctx?.putImageData(imgData,0,0);
         // })
 
 
-        //Draw face and simple light.
-        // model.value.getModel().then(()=>{
+        // Draw face and simple light.
+        // model.value.getModel(texture.value).then(()=>{
         //     for (let i=0; i< model.value.faces.length; i++) {
         //         let screenCoords:Array<Point> = []; let worldCoords:Array<Vector3> = [];
         //         for (let j =0; j < 3; j++){
@@ -165,7 +269,7 @@ export default defineComponent({
         //             DrawTriangleByEdgeTablePolygon(
         //                 imgData,
         //                 screenCoords,
-        //                 new Vector3(intensity*255,intensity*255,intensity*255));
+        //                 new Vector3(inten255,intensity*255,intensity*255));
         //         }
         //     }
         //     ctx?.putImageData(imgData,0,0);
@@ -179,51 +283,46 @@ export default defineComponent({
     
 
         // Draw with zbuffer.
-        model.value.getModel().then(()=>{
-            for (let i=0; i< model.value.faces.length; i++) {
-                let screenCoords:Array<Vector3> = []; let worldCoords:Array<Vector3> = [];
-                for (let j =0; j < 3; j++){
-                    let point = model.value.vertIndex(
-                        model.value.faces[i][j] - 1
-                    );
-                    worldCoords.push(point);
+        // model.value.getModel().then(()=>{
+        //     for (let i=0; i< model.value.faces.length; i++) {
+        //         let screenCoords:Array<Vector3> = []; let worldCoords:Array<Vector3> = [];
+        //         for (let j =0; j < 3; j++){
+        //             let point = model.value.vertIndex(
+        //                 model.value.faces[i][j] - 1
+        //             );
+        //             worldCoords.push(point);
 
-                    point = m2v(matrixMutiply(viewProjectionMatrix,v2m(point)));
-                    point = m2v(matrixMutiply(modelMatrix,v2m(point)));
-                    point = worldToScreen(point);
+        //             // point = m2v(matrixMutiply(viewProjectionMatrix,v2m(point)));
+        //             // point = m2v(matrixMutiply(modelMatrix,v2m(point)));
+        //             point = worldToScreen(point);
 
-                    screenCoords.push(point)
+        //             screenCoords.push(point)
 
-                }
-                let normal:Vector3 = vectorCross(
-                    vectorSubtract(worldCoords[1],worldCoords[0]),
-                    vectorSubtract(worldCoords[2],worldCoords[0])
-                )
+        //         }
+        //         let normal:Vector3 = vectorCross(
+        //             vectorSubtract(worldCoords[1],worldCoords[0]),
+        //             vectorSubtract(worldCoords[2],worldCoords[0])
+        //         )
 
-                normal = vectorNormalize(normal);
-                let lightDir = new Vector3(0,0,1);
-                let intensity = vectorMultiply(normal,lightDir);
+        //         normal = vectorNormalize(normal);
+        //         let lightDir = new Vector3(0,0,1);
+        //         let intensity = vectorMultiply(normal,lightDir);
              
-                if (intensity > 0){
-                    DrawTriangleWithZBuffer(
-                        zbuffer,
-                        imgData,
-                        screenCoords,
-                        new Vector3(intensity*255,intensity*255,intensity*255));
-                }
-            }
-            console.log(zbuffer)
-            console.log("OVER");
-            ctx?.putImageData(imgData,0,0);
-        })
-
-
-        // DrawTriangleWithZBuffer(
+        //         if (intensity > 0){
+        //             DrawTriangleWithZBuffer(
         //                 zbuffer,
         //                 imgData,
-        //                 [new Vector3(0,0,0),new Vector3(100,100,0),new Vector3(200,0,0)],
-        //                 new Vector3(0*255,0*255,0*255));
+        //                 screenCoords,
+        //                 new Vector3(intensity*255,intensity*255,intensity*255));
+        //         }
+        //     }
+        //     console.log(zbuffer)
+        //     console.log("OVER");
+        //     ctx?.putImageData(imgData,0,0);
+        // })
 
+
+ 
         ctx?.putImageData(imgData,0,0);
 
 
@@ -231,6 +330,8 @@ export default defineComponent({
     })
     return{
         canvas,
+        texture,
+        diffuse
     }
   }
 });

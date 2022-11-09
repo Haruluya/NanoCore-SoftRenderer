@@ -1,5 +1,5 @@
 import { Vector3,Vector2} from "./point";
-
+import diffuse from "../../static/texture/diffuse.png"
 /*
 @author:Haruluya.
 @des:Simple model(.obj).
@@ -12,15 +12,18 @@ export class Model{
     //Array of vertices.
     private verts:Array<Vector3> = [];
     //per-vertex array of tex coords.
-    private texCoord:Array<Vector2> = [];
+    public texCoord:Array<Vector2> = [];
     // per-vertex array of normal vectors
-    private norms:Array<Vector3> = [];
+    public norms:Array<Vector3> = [];
     // per-triangle indices in the above arrays.
-    private facetVrt:Array<number> = [];
-    private facetTex:Array<number> = [];
-    private facetNrm:Array<number> = [];
+    public facetVrt:Array<number> = [];
+    public facetTex:Array<number> = [];
+    public facetNrm:Array<number> = [];
 
     public faces:Array<Array<number>> =[]
+
+    public diffuse?:Uint8ClampedArray;
+
     // Diffuse color texture.
     private diffusemap:Path = '';
     // normal map texture.
@@ -32,9 +35,20 @@ export class Model{
     constructor(filename:Path){
     } 
 
-    async getModel():Promise<void>{
+    async getModel(texture?:HTMLCanvasElement):Promise<void>{
         return new Promise<void>(async (resolve,reject)=>{
             // https://webglfundamentals.org/webgl/resources/models/cube/cube.obj
+                if(!texture){
+                    console.log("TXTURE NONE")
+                    return;
+                }    
+                const ctx = texture.getContext('2d');
+
+                const imgData = ctx?.getImageData(0,0,texture.width,texture.height);
+                console.log(imgData,"txture");
+
+                this.diffuse = imgData?.data;
+
                 const response = await fetch('./static/obj/head.obj');  
                 const text:string = await response.text();
                 this.parseOBJ(text);
@@ -42,7 +56,7 @@ export class Model{
                 if (response){
                     resolve()
                 }else{
-                    reject
+                    reject()
                 }
             }
         );
@@ -95,8 +109,8 @@ export class Model{
                         console.log("ptn length < 3 !!!");
                     }
                     this.facetVrt.push(parseInt(ptn[0]));
-                    this.facetNrm.push(parseInt(ptn[1]));
-                    this.facetTex.push(parseInt(ptn[2]));
+                    this.facetNrm.push(parseInt(ptn[2]));
+                    this.facetTex.push(parseInt(ptn[1]));
 
                     faceV.push(parseInt(ptn[0]));
                 })

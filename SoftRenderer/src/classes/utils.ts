@@ -3,6 +3,7 @@ import {Point, Vector2, Vector3} from "./point"
 import { Polygon } from "./poloygon";
 import { Edge } from "./edge";
 import {Barycentric} from './math'
+import { Model } from "./model";
 
 interface ImageData{
     data:Uint8ClampedArray,
@@ -125,7 +126,7 @@ export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:
 }
 
 
-const DrawPoint = (imgData:ImageData,x:number,y:number,color:Vector3)=>{
+export const DrawPoint = (imgData:ImageData,x:number,y:number,color:Vector3)=>{
     
     
     var pixelData = imgData.data;
@@ -145,12 +146,8 @@ const DrawPoint = (imgData:ImageData,x:number,y:number,color:Vector3)=>{
 }
 
 
-
-
-
 const MAX_DEEP = 999;
 const MIN_DEEP = -999;
-
 
 
 export const DrawTriangleWithZBuffer = (zbuffer:Array<number>,imgData:ImageData,pointArray:Array<Vector3>,color:Vector3)=>{
@@ -182,9 +179,6 @@ export const DrawTriangleWithZBuffer = (zbuffer:Array<number>,imgData:ImageData,
         }
     }
 }
-
-
-
 
 
 export const DrawTriangleByEdgeTablePolygon = (imgData:ImageData,pointArray:Array<Point>,color:Vector3)=>{
@@ -295,7 +289,9 @@ export const DrawTriangleByEdgeTablePolygon = (imgData:ImageData,pointArray:Arra
 
 
 export const DrawTriangle = (imgData:ImageData,t0:Point,t1:Point,t2:Point)=>{
+
     if (t0.Y==t1.Y && t0.Y==t2.Y) return;
+    
     if (t0.Y>t1.Y) {    
         let temp = t0;
         t0 = t1;
@@ -321,9 +317,8 @@ export const DrawTriangle = (imgData:ImageData,t0:Point,t1:Point,t2:Point)=>{
         let alpha = i/total_height;
         let beta  = (i-(second_half ? t1.Y-t0.Y : 0))/segment_height; 
         //计算A,B两点的坐标
-        let A =    new Point(t0.X+(t2.X-t0.X)*alpha,t0.X+(t2.X-t0.X)*alpha);
-        let B = second_half ? new Point(t1.X+(t2.X-t1.X)*alpha,t0.X+(t2.X-t1.X)*alpha)
-                 : new Point(t0.X+(t1.X-t0.X)*alpha,t0.X+(t1.X-t0.X)*alpha);;
+        let A =    t0.add(t2.sub(t0).mutiply(alpha))
+        let B =    second_half? t1.add(t2.sub(t1).mutiply(beta)) :t0.add(t1.sub(t0).mutiply(beta))
         if (A.X>B.X){
             let temp = A;
             A = B;
@@ -335,4 +330,98 @@ export const DrawTriangle = (imgData:ImageData,t0:Point,t1:Point,t2:Point)=>{
         }
     }
 }
+let ix = 1;
+export const DrawTriangleWithUV = (
+    model:Model,intensity:number, zbuffer:Array<number>,imgData:ImageData,
+    t0:Vector3,t1:Vector3,t2:Vector3,
+    ity0:number,ity1:number,ity2:number,
+    uv0:Vector2,uv1:Vector2,uv2:Vector2
 
+    )=>{
+
+
+
+
+    if (t0.Y==t1.Y && t0.Y==t2.Y) return;
+    if (t0.Y>t1.Y) {    
+        let temp = t0;t0 = t1; t1 = temp;
+        let temp2 = ity0; ity0 = ity1; ity1 = temp2;  
+        let temp3 = uv0; uv0 = uv1; uv1 = temp3;
+    };
+    if (t0.Y>t2.Y) {
+        let temp = t0;t0 = t2;t2 = temp;
+        let temp2 = ity0; ity0 = ity2; ity2 = temp2;  
+        let temp3 = uv0; uv0 = uv2; uv2 = temp3;
+    };
+    if (t1.Y>t2.Y){
+        let temp = t1;t1 = t2;t2 = temp; 
+        let temp2 = ity1; ity1 = ity2; ity2 = temp2;  
+        let temp3 = uv1; uv1 = uv2; uv2 = temp3;
+    };
+    let total_height = t2.Y-t0.Y;
+    for (let i=0; i< total_height; i++) {
+
+        let second_half = i>t1.Y-t0.Y || t1.Y==t0.Y;
+        let segment_height = second_half ? t2.Y-t1.Y : t1.Y-t0.Y;
+
+        let alpha = i/total_height;
+        let beta  = (i-(second_half ? t1.Y-t0.Y : 0))/segment_height; 
+
+
+        let A =    t0.add(t2.sub(t0).mutiply(alpha))
+        let B =    second_half? t1.add(t2.sub(t1).mutiply(beta)) :t0.add(t1.sub(t0).mutiply(beta))
+        
+        let ityA = ity0 + (ity2-ity0)*alpha;
+        let ityB = second_half? ity1 + (ity2-ity1)*beta : ity0 + (ity1-ity0)*beta;
+        
+        let uvA = uv0.add(uv2.sub(uv0).mutiply(alpha))
+        let uvB = second_half ?  uv1.add(uv2.sub(uv1).mutiply(beta)): uv0.add(uv1.sub(uv0).mutiply(beta));
+
+
+
+        
+        if (A.X>B.X){
+            let temp = A;A = B;B = temp;
+            let temp2 = ityA; ityA = ityB; ityB = temp2;
+            let temp3 = uvA; uvA = uvB; uvB = temp3;
+        };
+
+        for (let j=A.X; j<=B.X; j++) {
+            let phi = B.X == A.X? 1.:(j-A.X)/(B.X-A.X);
+            let P = A.add(B.sub(A).mutiply(phi))
+            let ityP = ityA + (ityB-ityA)*phi;
+            ityP = Math.min(1.,Math.abs(ityP)+0.01);
+
+            let uvP = uvA.add(uvB.sub(uvA).mutiply(phi));
+
+            if (P.X < imgData.width && P.Y < imgData.height)
+            {
+                let idx = Math.floor(P.X+P.Y*imgData.width);
+
+                if (zbuffer[idx] < P.Z ){
+                    zbuffer[idx] = P.Z;
+      
+                    let color = getDiffuseByUV(model,uvP);
+
+                    DrawPoint(imgData,P.X,P.Y,color.mutiply(ityP));
+                }
+            }
+        }
+    }
+}
+
+
+export const getDiffuseByUV = (model:Model,uv:Vector2):Vector3=>{
+    let x = Math.floor(uv.X * 1023);
+    // Be careful ! V dirction is inversed!
+    let y = Math.floor((1- uv.Y) * 1023);
+    // you can`t using float uv!!!
+    
+    return new Vector3(
+        model.diffuse[(x+y*1024)*4 + 0],
+        model.diffuse[(x+y*1024)*4 + 1],
+        model.diffuse[(x+y*1024)*4 + 2],
+    )
+
+    return new Vector3(255,255,255)
+}
