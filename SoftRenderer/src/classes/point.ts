@@ -90,6 +90,9 @@ export class Vector3{
             this.Z *t
         )
     }
+    getVec2(){
+        return new Vector2(this.X,this.Y);
+    }
 }
 
 export class Vector4{
@@ -101,33 +104,46 @@ export class Vector4{
     set Z(z:number){ this[2] = z}
     get W():number{return this[3];}
     set W(z:number){ this[3] = z}
-    constructor(x:number,y:number,z:number,w:number){
-        this[0] = x; this[1] = y; this[2] = z;this[3] = w;
+
+    constructor(v3:Vector3,w:number){
+        this[0] = v3[0]; this[1] = v3[1]; this[2] = v3[2];this[3] = w;
     }
 
     [index:number]:number;
     add(b:Vector4){
         return new Vector4(
-            this.X + b.X,
-            this.Y + b.Y,
-            this.Z + b.Z,
+            new Vector3(
+                this.X + b.X,
+                this.Y + b.Y,
+                this.Z + b.Z,
+            ),
             this.W + b.W
         )
     }
     sub(b:Vector4){
         return new Vector4(
-            this.X - b.X,
-            this.Y - b.Y,
-            this.Z - b.Z,
+            new Vector3(
+                this.X - b.X,
+                this.Y - b.Y,
+                this.Z - b.Z,
+            ),
             this.W - b.W
         )
     }
     mutiply(t:number){
         return new Vector4(
-            this.X *t,
-            this.Y *t,
-            this.Z *t,
+            new Vector3(
+                this.X *t,
+                this.Y *t,
+                this.Z *t,
+            ),
             this.W*=t
         )
+    }
+    getVec2(){
+        return new Vector2(this.X,this.Y);
+    }
+    getVec3(){
+        return new Vector3(this.X,this.Y,this.Z);
     }
 }

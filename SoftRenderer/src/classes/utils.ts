@@ -1,9 +1,10 @@
 
-import {Point, Vector2, Vector3} from "./point"
+import {Point, Vector2, Vector3, Vector4} from "./point"
 import { Polygon } from "./poloygon";
 import { Edge } from "./edge";
 import {Barycentric} from './math'
 import { Model } from "./model";
+import { Shader } from "./shaders/shader";
 
 interface ImageData{
     data:Uint8ClampedArray,
@@ -11,6 +12,18 @@ interface ImageData{
     height:number,
     colorSpace:string
 }
+
+// zbuffer.
+let zbuffer:Array<number> = [];
+
+export const InitZBuffer = (width:number,height:number)=>{
+    for (let i = 0; i < width * height; i++){
+        zbuffer.push(-1 * MAX_DEEP);
+    }
+}
+
+
+
 export const DrawLine = (ctx:any,beginPoint:Point,endPoint:Point,color:Vector3 )=>{
     ctx.beginPath();
     ctx.moveTo(beginPoint.X, beginPoint.Y);
@@ -146,8 +159,8 @@ export const DrawPoint = (imgData:ImageData,x:number,y:number,color:Vector3)=>{
 }
 
 
-const MAX_DEEP = 999;
-const MIN_DEEP = -999;
+const MAX_DEEP = 9999;
+const MIN_DEEP = -9999;
 
 
 export const DrawTriangleWithZBuffer = (zbuffer:Array<number>,imgData:ImageData,pointArray:Array<Vector3>,color:Vector3)=>{
@@ -332,16 +345,16 @@ export const DrawTriangle = (imgData:ImageData,t0:Point,t1:Point,t2:Point)=>{
 }
 let ix = 1;
 export const DrawTriangleWithUV = (
-    model:Model,intensity:number, zbuffer:Array<number>,imgData:ImageData,
-    t0:Vector3,t1:Vector3,t2:Vector3,
-    ity0:number,ity1:number,ity2:number,
-    uv0:Vector2,uv1:Vector2,uv2:Vector2
-
+    model:Model, 
+    imgData:ImageData,
+    screenCoords:Array<Vector3>,
+    intensity:Array<number>,
+    texCoord:Array<Vector2>
     )=>{
 
-
-
-
+    let t0 = screenCoords[0], t1 = screenCoords[1], t2 = screenCoords[2];
+    let ity0 = intensity[0], ity1 = intensity[1], ity2 = intensity[2];
+    let uv0 = texCoord[0], uv1 = texCoord[1], uv2 = texCoord[2];
     if (t0.Y==t1.Y && t0.Y==t2.Y) return;
     if (t0.Y>t1.Y) {    
         let temp = t0;t0 = t1; t1 = temp;
@@ -400,7 +413,7 @@ export const DrawTriangleWithUV = (
 
                 if (zbuffer[idx] < P.Z ){
                     zbuffer[idx] = P.Z;
-      
+
                     let color = getDiffuseByUV(model,uvP);
 
                     DrawPoint(imgData,P.X,P.Y,color.mutiply(ityP));
@@ -411,17 +424,66 @@ export const DrawTriangleWithUV = (
 }
 
 
+export const DrawTriangleWithShader = (
+    shader:Shader,
+    imgData:ImageData,
+    screenCoords:Array<Vector4>
+    )=>{
+
+
+    let bboxmin:Vector2 = new Vector2(MAX_DEEP,MAX_DEEP);
+    let bboxmax:Vector2 = new Vector2(MIN_DEEP,MIN_DEEP);
+
+    for (let i=0; i<3; i++) {
+        for (let j=0; j<2; j++) {
+            bboxmin[j] = Math.min(bboxmin[j], screenCoords[i][j]/screenCoords[i][3]);
+            bboxmax[j] = Math.max(bboxmax[j], screenCoords[i][j]/screenCoords[i][3]);
+        }
+    }
+
+
+
+    // Do not use point or vec2, web engine can not handle.
+    for (let i=bboxmin.X; i<=bboxmax.X; i++) {
+
+        for (let j =bboxmin.Y; j <bboxmax.Y; j++) {
+
+            let c:Vector3  = Barycentric(screenCoords[0].getVec2(), screenCoords[1].getVec2(), screenCoords[2].getVec2(), new Vector2(i,j));
+
+            let zP = (screenCoords[0][2]/screenCoords[0][3])*c.X 
+                    +(screenCoords[0][2]/screenCoords[1][3])*c.Y
+                    +(screenCoords[0][2]/screenCoords[2][3])*c.Z  
+
+            if (c.X<0 || c.Y<0 || c.Z<0 ) continue;
+            let {discard,color} = shader.fragment();
+            
+
+            if (!discard){
+                if (zbuffer[Math.floor(i+j* imgData.width)] < zP) {
+                    zbuffer[Math.floor(i+j* imgData.width)] = zP;
+                    DrawPoint(imgData,i,j,color);
+                }
+            }
+
+        }
+
+       
+    }
+        
+}
+
+
 export const getDiffuseByUV = (model:Model,uv:Vector2):Vector3=>{
     let x = Math.floor(uv.X * 1023);
     // Be careful ! V dirction is inversed!
     let y = Math.floor((1- uv.Y) * 1023);
     // you can`t using float uv!!!
-    
+
     return new Vector3(
         model.diffuse[(x+y*1024)*4 + 0],
         model.diffuse[(x+y*1024)*4 + 1],
         model.diffuse[(x+y*1024)*4 + 2],
     )
 
-    return new Vector3(255,255,255)
+    // return new Vector3(255,255,255)
 }

@@ -16,11 +16,11 @@ export class Model{
     // per-vertex array of normal vectors
     public norms:Array<Vector3> = [];
     // per-triangle indices in the above arrays.
-    public facetVrt:Array<number> = [];
-    public facetTex:Array<number> = [];
-    public facetNrm:Array<number> = [];
+    public facetVrt:Array<Vector3> = [];
+    public facetTex:Array<Vector2> = [];
+    public facetNrm:Array<Vector3> = [];
 
-    public faces:Array<Array<number>> =[]
+    public faces:Array<Vector3> =[]
 
     public diffuse?:Uint8ClampedArray;
 
@@ -62,17 +62,50 @@ export class Model{
         );
 
     }
+
     nverts():number{
         return this.verts.length;
     }
     vertIndex(index:number):Vector3{
         return this.verts[index];
     }
+    texIndex(index:number):Vector2{
+        return this.texCoord[index];
+    }
+    normalIndex(index:number):Vector3{
+        return this.norms[index];
+    }
     nfaces():number{
         return this.facetVrt.length;
     }
-    faceVrtIndex(index:number):number{
-        return this.facetVrt[index];
+    // faceVrtIndex(index:number):number{
+    //     return this.facetVrt[index];
+    // }
+    getVertByFaceMap(nindex:number,index:number):Vector3{
+        return this.vertIndex(this.faces[nindex+index][0]);
+    }
+    getUVByFaceMap(nindex:number,index:number):Vector2{
+        return this.texIndex(this.faces[nindex+index][1]);
+    }
+    getNormalByFaceMap(nindex:number,index:number):Vector3{
+        return this.normalIndex(this.faces[nindex+index][2]);
+    }
+
+    getDiffuseByUV(uv:Vector2):Vector3{
+        let x = Math.floor(uv.X * 1023);
+        // Be careful ! V dirction is inversed!
+        let y = Math.floor((1- uv.Y) * 1023);
+        // you can`t using float uv!!!
+        if (!this.diffuse){
+            console.log("DIFFUSE NOT FOUND!")
+            return new Vector3(0,0,0);
+        }else{
+            return new Vector3(
+                this.diffuse[(x+y*1024)*4 + 0],
+                this.diffuse[(x+y*1024)*4 + 1],
+                this.diffuse[(x+y*1024)*4 + 2],
+            )
+        }
     }
 
     parseOBJ(text:string) {
@@ -102,21 +135,29 @@ export class Model{
             },
             f:(parts:Array<string>)=>{
                 let faceV:Array<number> = [];
-
+                let faceN:Array<number> = [];
+                let faceT:Array<number> = [];
                 parts.forEach((element)=>{
                     const ptn = element.split('/');
+                    const ptnNum:Array<number> = []
                     if (ptn.length < 3){
                         console.log("ptn length < 3 !!!");
                     }
-                    this.facetVrt.push(parseInt(ptn[0]));
-                    this.facetNrm.push(parseInt(ptn[2]));
-                    this.facetTex.push(parseInt(ptn[1]));
 
-                    faceV.push(parseInt(ptn[0]));
+                    ptn.forEach((e)=>{
+                        ptnNum.push(parseInt(e) - 1);
+                    })
+
+                    faceV.push(ptnNum[0]);
+                    faceT.push(ptnNum[1]);
+                    faceN.push(ptnNum[2]);
+                    this.faces.push(new Vector3(ptnNum[0],ptnNum[1],ptnNum[2]));
                 })
 
-                this.faces.push([faceV[0],faceV[1],faceV[2]]);
-
+              
+                this.facetVrt.push(new Vector3(faceV[0],faceV[1],faceV[2]));
+                this.facetTex.push(new Vector3(faceT[0],faceT[1],faceT[2]));
+                this.facetNrm.push(new Vector3(faceN[0],faceN[1],faceN[2]));
             },
           };
 

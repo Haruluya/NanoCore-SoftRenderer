@@ -1,6 +1,6 @@
 
-import { Vector3} from "./point";
-export const Barycentric = (A:Vector3,B:Vector3,C:Vector3,P:Vector3):Vector3=>{
+import { Vector2, Vector3} from "./point";
+export const Barycentric = (A:Vector2,B:Vector2,C:Vector2,P:Vector2):Vector3=>{
     let s:Array<Vector3> = [new Vector3(0,0,0),new Vector3(0,0,0),new Vector3(0,0,0)];
     for (let i=2; i--; ) {
         s[i][0] = C[i]-A[i];
