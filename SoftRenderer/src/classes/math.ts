@@ -1,5 +1,5 @@
 
-import { Vector2, Vector3} from "./point";
+import { Vector2, Vector3, Vector4} from "./point";
 export const Barycentric = (A:Vector2,B:Vector2,C:Vector2,P:Vector2):Vector3=>{
     let s:Array<Vector3> = [new Vector3(0,0,0),new Vector3(0,0,0),new Vector3(0,0,0)];
     for (let i=2; i--; ) {
@@ -269,6 +269,10 @@ export const v2m = (v:Vector3):Float32Array=>{
 
 export const m2v = (m:Float32Array):Vector3=> {
     return new Vector3(m[0],m[1],m[2]);
+}
+
+export const m2v4 = (m:Float32Array):Vector4=>{
+    return new Vector4(new Vector3(m[0],m[1],m[2]),m[3]);
 }
 
 

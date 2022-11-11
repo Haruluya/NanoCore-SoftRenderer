@@ -146,4 +146,9 @@ export class Vector4{
     getVec3(){
         return new Vector3(this.X,this.Y,this.Z);
     }
+    getMatrix(){
+        return new Float32Array([
+            this.X,this.Y,this.Z,this.W
+        ])
+    }
 }

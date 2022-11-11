@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "nanocore-ui": "^1.0.9",
     "vue": "^3.2.41"
   },
   "devDependencies": {

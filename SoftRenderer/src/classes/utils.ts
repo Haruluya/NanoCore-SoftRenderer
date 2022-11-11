@@ -455,7 +455,7 @@ export const DrawTriangleWithShader = (
                     +(screenCoords[0][2]/screenCoords[2][3])*c.Z  
 
             if (c.X<0 || c.Y<0 || c.Z<0 ) continue;
-            let {discard,color} = shader.fragment();
+            let {discard,color} = shader.fragment(c);
             
 
             if (!discard){
@@ -472,18 +472,3 @@ export const DrawTriangleWithShader = (
         
 }
 
-
-export const getDiffuseByUV = (model:Model,uv:Vector2):Vector3=>{
-    let x = Math.floor(uv.X * 1023);
-    // Be careful ! V dirction is inversed!
-    let y = Math.floor((1- uv.Y) * 1023);
-    // you can`t using float uv!!!
-
-    return new Vector3(
-        model.diffuse[(x+y*1024)*4 + 0],
-        model.diffuse[(x+y*1024)*4 + 1],
-        model.diffuse[(x+y*1024)*4 + 2],
-    )
-
-    // return new Vector3(255,255,255)
-}

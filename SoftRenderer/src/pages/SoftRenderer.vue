@@ -3,6 +3,7 @@
         <canvas class="show" ref="canvas" :width="width" :height="height"/>
         <canvas class="textureCanvas" ref="texture" :width="textureWidth" :height="textureHeight">
         </canvas>
+        <nano_button></nano_button>
     </div>
 </template>
 <script lang="ts">
@@ -67,19 +68,19 @@ export default defineComponent({
     let camera = {
         target:new Vector3(0, 0, 0),
         position:new Vector3(0, 0, -1),
-        up:new Vector3(0,1,0)
+        up:new Vector3(0,-1,0)
     };
     
     let perspectiveValue = {
         aspect:width.value/height.value,
         fieldOfViewRadians: degToRad(60),
         zNear: 1,
-        zFar: 10,
+        zFar: 2,
     }
 
     let transform = {
-        translation:[0,0,0],
-        rotation:[degToRad(180),degToRad(180),degToRad(0)],
+        translation:[.5,0,0],
+        rotation:[degToRad(0),degToRad(0),degToRad(0)],
         scale:[1,1,1]
     }
 
@@ -106,15 +107,13 @@ export default defineComponent({
             perspectiveValue.zNear,
             perspectiveValue.zFar
         )
-
+        console.log(projectionMatrix)
         let cameraMatrix = lookAt(
             camera.position,
             camera.target,
             camera.up
         )
-
         viewMatrix = inverse(cameraMatrix);
-        let viewProjectionMatrix = matrixMutiply(viewMatrix,projectionMatrix);
         modelMatrix = getTransformMatrix(transform);
 
 
@@ -136,19 +135,19 @@ export default defineComponent({
                         
                     for (let i = 0; i < 3; i++){
 
-                        flatShader.setUnifrom('unifromProjectionMatrix',projectionMatrix);
-                        flatShader.setUnifrom('unifromModelMatrix',modelMatrix);
-                        flatShader.setUnifrom('unifromViewMatrix',viewMatrix);
-                        flatShader.setUnifrom('unifromLightDir',lightDir);
+                        basicPerVertexShader.setUnifrom('unifromProjectionMatrix',projectionMatrix);
+                        basicPerVertexShader.setUnifrom('unifromModelMatrix',modelMatrix);
+                        basicPerVertexShader.setUnifrom('unifromViewMatrix',viewMatrix);
+                        basicPerVertexShader.setUnifrom('unifromLightDir',lightDir);
                         
                         screenCoords.push(
-                            flatShader.vertex(index*3,i)
+                            basicPerVertexShader.vertex(index*3,i)
                         )
      
 
                     }
                     DrawTriangleWithShader(
-                        flatShader,
+                        basicPerVertexShader,
                         imgData,
                         screenCoords,
                     )
