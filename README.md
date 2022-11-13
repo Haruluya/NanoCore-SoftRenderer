@@ -21,4 +21,4 @@ git clone https://github.com/Haruluya/NanoCore-SoftRenderer.git
 
 ### Presentation
 
-![image-20221113170409729](C:\Users\24558\AppData\Roaming\Typora\typora-user-images\image-20221113170409729.png)
+![image-20221113170409729](./Document/images/image-20221113170409729.png)
