@@ -40,16 +40,15 @@ export class Model{
             // https://webglfundamentals.org/webgl/resources/models/cube/cube.obj
                 if(!texture){
                     console.log("TXTURE NONE")
-                    return;
                 }    
-                const ctx = texture.getContext('2d');
+                // const ctx = texture.getContext('2d');
 
-                const imgData = ctx?.getImageData(0,0,texture.width,texture.height);
-                console.log(imgData,"txture");
+                // const imgData = ctx?.getImageData(0,0,texture.width,texture.height);
+                // console.log(imgData,"txture");
 
-                this.diffuse = imgData?.data;
+                // this.diffuse = imgData?.data;
 
-                const response = await fetch('./static/obj/head.obj');  
+                const response = await fetch('./static/obj/assassin/assassin.obj');  
                 const text:string = await response.text();
                 this.parseOBJ(text);
                 console.log("THIS",this);
@@ -82,13 +81,13 @@ export class Model{
     //     return this.facetVrt[index];
     // }
     getVertByFaceMap(nindex:number,index:number):Vector3{
-        return this.vertIndex(this.faces[nindex+index][0]);
+        return this.vertIndex(this.faces[nindex*3+index][0]);
     }
     getUVByFaceMap(nindex:number,index:number):Vector2{
-        return this.texIndex(this.faces[nindex+index][1]);
+        return this.texIndex(this.faces[nindex*3+index][1]);
     }
     getNormalByFaceMap(nindex:number,index:number):Vector3{
-        return this.normalIndex(this.faces[nindex+index][2]);
+        return this.normalIndex(this.faces[nindex*3+index][2]);
     }
 
     getDiffuseByUV(uv:Vector2):Vector3{

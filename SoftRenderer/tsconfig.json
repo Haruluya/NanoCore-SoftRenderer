@@ -10,10 +10,16 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "lib": ["ESNext", "DOM"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    },
     "skipLibCheck": true,
     "noEmit": true,
     "allowJs": true
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "src/pages/ui-setting.js", "src/pages/ui-setting.js"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -24,8 +24,21 @@ export const InitZBuffer = (width:number,height:number)=>{
 
 
 
-export const DrawLine = (ctx:any,beginPoint:Point,endPoint:Point,color:Vector3 )=>{
+export const DrawLine = (
+    ctx:any,
+    beginPoint:Point,
+    endPoint:Point,
+    color:Vector3,
+    dx?:number,
+    dy?:number, 
+    )=>{
     ctx.beginPath();
+
+    if(dx !== undefined && dy !== undefined){
+        beginPoint.add(new Vector2(dx,dy));
+        endPoint.add(new Vector2(dx,dy));
+    }
+
     ctx.moveTo(beginPoint.X, beginPoint.Y);
     ctx.lineTo(endPoint.X, endPoint.Y);
     ctx.strokeStyle = 'black';
@@ -33,7 +46,12 @@ export const DrawLine = (ctx:any,beginPoint:Point,endPoint:Point,color:Vector3 )
     ctx.closePath();
 }
 
-export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:Point,color:Vector3):void=>{
+export const DrawLineByBresenham = (
+    imgData:ImageData,
+    beginPoint:Point,
+    endPoint:Point,
+    color:Vector3,
+    ):void=>{
     let temp = null;
     let m, x, y = 0;
     let e = -0.5;
@@ -47,7 +65,7 @@ export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:
             endPoint = temp;
         }
         for (x = beginPoint.X; x < endPoint.X; x++)
-            DrawPoint(imgData,x, beginPoint.Y, color);
+        DrawPointByImgData(imgData,x, beginPoint.Y, color);
         return;
     }
     //Vertical line.
@@ -58,7 +76,7 @@ export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:
             endPoint = temp;
         }
         for (y = beginPoint.Y; y < endPoint.Y; y++)
-            DrawPoint(imgData,beginPoint.X, y, color);
+        DrawPointByImgData(imgData,beginPoint.X, y, color);
         return;
     }
 
@@ -73,7 +91,7 @@ export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:
         x = beginPoint.X;
         y = beginPoint.Y;
         while (x < endPoint.X) {
-            DrawPoint(imgData,x, y, color);
+            DrawPointByImgData(imgData,x, y, color);
             e = e + m;
             if (e > 0) {
                 y++;
@@ -91,7 +109,7 @@ export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:
         x = beginPoint.X;
         y = beginPoint.Y;
         while (x < endPoint.X) {
-            DrawPoint(imgData, x, y, color);
+            DrawPointByImgData(imgData, x, y, color);
             e = e + m;
             if (e < 0) {
                 y--;
@@ -109,7 +127,7 @@ export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:
         x = beginPoint.X;
         y = beginPoint.Y;
         while (y < endPoint.Y) {
-            DrawPoint(imgData, x, y, color);
+            DrawPointByImgData(imgData, x, y, color);
             e = e + 1 / m;
             if (e > 0) {
                 x = x + 1;
@@ -127,7 +145,7 @@ export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:
         x = beginPoint.X;
         y = beginPoint.Y;
         while (y < endPoint.Y) {
-            DrawPoint(imgData, x, y, color);
+            DrawPointByImgData(imgData, x, y, color);
             e = e + 1 / m;
             if (e < 0) {
                 x--;
@@ -139,18 +157,22 @@ export const DrawLineByBresenham = (imgData:ImageData,beginPoint:Point,endPoint:
 }
 
 
-export const DrawPoint = (imgData:ImageData,x:number,y:number,color:Vector3)=>{
+export const DrawPointByImgData = (
+    imgData:ImageData,
+    x:number,y:number,
+    color:Vector3,
+    )=>{
     
     
-    var pixelData = imgData.data;
+    let pixelData = imgData.data;
     if (x > imgData.width || x < 0 || y > imgData.height || y < 0){
         return;
     }
-
     x = Math.floor(x);
     y = Math.floor(y);
+
     const pixelIndex = (x+y*imgData.width)*4;
-    
+
     pixelData[pixelIndex+0] = color.X;
     pixelData[pixelIndex+1] = color.Y;
     pixelData[pixelIndex+2] = color.Z;
@@ -158,6 +180,163 @@ export const DrawPoint = (imgData:ImageData,x:number,y:number,color:Vector3)=>{
 
 }
 
+export const DrawPointInGrid = (
+    ctx:CanvasRenderingContext2D,
+    girdSize:number,
+    gridx:number, 
+    gridy:number, 
+    color:Vector3,
+
+    ) => {
+
+    // cant overflow.---> can overflow(for display in grid).
+    // if (gridx > Math.floor(width / girdSize) - 2 ||
+    //     gridy > Math.floor(height / girdSize) - 2)
+    //     return;
+
+    let rectx = gridx * girdSize;
+    let recty = gridy * girdSize;
+
+
+    ctx.fillStyle = 'rgb('+color.X+','+color.Y+','+color.Z+')';
+    ctx.fillRect(rectx, recty, girdSize, girdSize);
+}
+
+export const DrawLineInGrid = (
+    ctx:CanvasRenderingContext2D,
+    girdSize:number,
+    width:number,
+    height:number,
+    beginPoint:Point, 
+    endPoint:Point, 
+    color:Vector3,
+    ) => {
+    let temp = null;
+    let m, x, y = 0;
+    let e = -0.5;
+    //Horizontal line.
+    if (beginPoint.Y == endPoint.Y) {
+        if (beginPoint.X > endPoint.X) {
+            temp = beginPoint;
+            beginPoint = endPoint;
+            endPoint = temp;
+        }
+        for (x = beginPoint.X; x < endPoint.X; x++)
+            DrawPointInGrid(ctx,girdSize, x, beginPoint.Y, color);
+        return;
+    }
+    //Vertical line.
+    if (beginPoint.X == endPoint.X) {
+        if (beginPoint.Y > endPoint.Y) {
+            temp = beginPoint;
+            beginPoint = endPoint;
+            endPoint = temp;
+        }
+        for (y = beginPoint.Y; y < endPoint.Y; y++)
+            DrawPointInGrid(ctx,girdSize, beginPoint.X, y, color);
+        return;
+    }
+
+    m = (endPoint.Y - beginPoint.Y) / (endPoint.X - beginPoint.X);
+    if (m > 0 && m <= 1) {
+        if (beginPoint.X > endPoint.X) {
+            temp = beginPoint;
+            beginPoint = endPoint;
+            endPoint = temp;
+        }
+        e = -0.5;
+        x = beginPoint.X;
+        y = beginPoint.Y;
+        while (x < endPoint.X) {
+            DrawPointInGrid(ctx,girdSize, x, y, color);
+            e = e + m;
+            if (e > 0) {
+                y++;
+                e = e - 1;
+            }
+            x++;
+        }
+    } else if (m >= -1 && m < 0) {
+        if (beginPoint.X > endPoint.X) {
+            temp = beginPoint;
+            beginPoint = endPoint;
+            endPoint = temp;
+        }
+        e = 0.5;
+        x = beginPoint.X;
+        y = beginPoint.Y;
+        while (x < endPoint.X) {
+            DrawPointInGrid(ctx,girdSize, x, y, color);
+            e = e + m;
+            if (e < 0) {
+                y--;
+                e = e + 1;
+            }
+            x++;
+        }
+    } else if (m > 1) {
+        if (beginPoint.Y > endPoint.Y) {
+            temp = beginPoint;
+            beginPoint = endPoint;
+            endPoint = temp;
+        }
+        e = -0.5;
+        x = beginPoint.X;
+        y = beginPoint.Y;
+        while (y < endPoint.Y) {
+            DrawPointInGrid(ctx,girdSize, x, y, color);
+            e = e + 1 / m;
+            if (e > 0) {
+                x = x + 1;
+                e = e - 1;
+            }
+            y++;
+        }
+    } else {
+        if (beginPoint.Y > endPoint.Y) {
+            temp = beginPoint;
+            beginPoint = endPoint;
+            endPoint = temp;
+        }
+        e = 0.5;
+        x = beginPoint.X;
+        y = beginPoint.Y;
+        while (y < endPoint.Y) {
+            DrawPointInGrid(ctx,girdSize, x, y, color);
+            e = e + 1 / m;
+            if (e < 0) {
+                x--;
+                e = e + 1;
+            }
+            y++;
+        }
+    }
+}
+
+export const DrawGrid = (
+    ctx:CanvasRenderingContext2D,
+    girdSize:number,
+    width:number,
+    height:number,
+    ) => {
+    let xLineTotals = Math.floor(height / girdSize);
+    let yLineTotals = Math.floor(width / girdSize);
+    for (let i = 0; i < xLineTotals; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, girdSize * i);
+        ctx.lineTo((yLineTotals - 1) * girdSize, girdSize * i);
+        ctx.strokeStyle = "#ccc";
+        ctx.stroke();
+    }
+    for (let j = 0; j < yLineTotals; j++) {
+        ctx.beginPath();
+        ctx.moveTo(girdSize * j, 0);
+        ctx.lineTo(girdSize * j, (xLineTotals - 1) * girdSize);
+        ctx.strokeStyle = "#ccc";
+        ctx.stroke();
+    }
+
+}
 
 const MAX_DEEP = 9999;
 const MIN_DEEP = -9999;
@@ -343,6 +522,7 @@ export const DrawTriangle = (imgData:ImageData,t0:Point,t1:Point,t2:Point)=>{
         }
     }
 }
+
 let ix = 1;
 export const DrawTriangleWithUV = (
     model:Model, 
@@ -472,3 +652,42 @@ export const DrawTriangleWithShader = (
         
 }
 
+export const DrawLineByCanvasApi = (
+    ctx:CanvasRenderingContext2D, 
+    beginPoint:Point, 
+    endPoint:Point, 
+    color:Vector3,
+    ) => {
+
+
+    ctx.moveTo(beginPoint.X, beginPoint.Y);
+    ctx.lineTo(endPoint.X, endPoint.Y);
+    ix++;
+    if (ix < 1000){
+        console.log(beginPoint,endPoint)
+    }
+
+    ctx.strokeStyle = 'rgb('+color.X+','+color.Y+','+color.Z+')';
+}
+
+export const Hex2Rgb  = (colorHex:string)=>{
+
+    let reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+    let color = colorHex.toLowerCase();
+    if (reg.test(color)) {
+      if (color.length === 4) {
+        let colorNew = "#";
+        for (let i = 1; i < 4; i += 1) {
+          colorNew += color.slice(i, i + 1).concat(color.slice(i, i + 1));
+        }
+        color = colorNew;
+      }
+      let colorChange = [];
+      for (let i = 1; i < 7; i += 2) {
+        colorChange.push(parseInt("0x" + color.slice(i, i + 2)));
+      }
+      return colorChange;
+    } else {
+      return [0,0,0];
+    }
+}

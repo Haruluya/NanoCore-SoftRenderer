@@ -1,25 +1,68 @@
 <script setup lang="ts">
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-import SoftRendererVue from './pages/SoftRenderer.vue';
+import Logo from "./assets/images/Logo.png"
+
+const menuData = [
+  {name:"DrawFrame",link:"drawframe"},
+  {name:"DrawFaces",link:"drawfaces"},
+  {name:"Camera",link:"camera"},
+  {name:"Shader",link:"shader"},
+  {name:"BlinePhone",link:"blinephone"},
+]
+
 </script>
 
 <template>
-  <div>
-    <SoftRendererVue />
+  <div class="app">
+    <div class="app-menu">
+      <nano_widget_menu_tab
+        :prop_logo="Logo" 
+        prop_title="NanoRenderer"
+        :prop_menu_data="menuData"
+      />
+    </div>
+    <div class="app-content">
+      <nano_totop_button/>
+      <router-view>
+      </router-view>
+  </div>
+  <div class="app-footer">
+      <nano_footer></nano_footer>
+  </div>
   </div>
 </template>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
+<style>
+html{
+  overflow-x: hidden !important; 
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+
+.app-content{
+  width: 100vw;
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+.app-footer{
+  height: 40vh;
+  width: 100vw;
 }
+
+span{
+  font-family: "Arial Rounded MT Bold", "Helvetica Rounded", Arial, sans-serif;;
+  mask:radial-gradient(circle at 0 50%, #000, transparent 10%, transparent 0);
+  -webkit-mask: radial-gradient(circle at 0 50%, #000, transparent 10%, transparent 0);
+  mask-size: 10000% ;
+  -webkit-mask-size: 10000% ;
+  animation: textShow 3s ;
+
+}
+
+@keyframes textShow {
+  from{
+      mask-size: 100% ;
+      -webkit-mask-size:100% ;
+  }
+  to{
+      mask-size: 10000% ;
+      -webkit-mask-size:10000%;
+  }
+}
+
 </style>
