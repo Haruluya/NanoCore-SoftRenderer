@@ -1,5 +1,7 @@
-import { Vector3,Vector2} from "./point";
+
 import diffuse from "../../static/texture/diffuse.png"
+import { Vector2 } from "./vector2";
+import { Vector3 } from "./vector3";
 /*
 @author:Haruluya.
 @des:Simple model(.obj).
@@ -12,17 +14,17 @@ export class Model{
     //Array of vertices.
     private verts:Array<Vector3> = [];
     //per-vertex array of tex coords.
-    public texCoord:Array<Vector2> = [];
+    private texCoord:Array<Vector2> = [];
     // per-vertex array of normal vectors
-    public norms:Array<Vector3> = [];
+    private norms:Array<Vector3> = [];
     // per-triangle indices in the above arrays.
     public facetVrt:Array<Vector3> = [];
     public facetTex:Array<Vector2> = [];
     public facetNrm:Array<Vector3> = [];
 
-    public faces:Array<Vector3> =[]
+    private faces:Array<Vector3> =[]
 
-    public diffuse?:Uint8ClampedArray;
+    private diffuse?:Uint8ClampedArray;
 
     // Diffuse color texture.
     private diffusemap:Path = '';
@@ -30,14 +32,15 @@ export class Model{
     private normalmap:Path = '';
     // specular map texture.
     private specularmap:Path = '';
+    private fileName:Path = '';
 
     //init model.
     constructor(filename:Path){
+        this.fileName = filename;
     } 
 
     async getModel(texture?:HTMLCanvasElement):Promise<void>{
         return new Promise<void>(async (resolve,reject)=>{
-            // https://webglfundamentals.org/webgl/resources/models/cube/cube.obj
                 if(!texture){
                     console.log("TXTURE NONE")
                 }    
@@ -48,7 +51,8 @@ export class Model{
 
                 // this.diffuse = imgData?.data;
 
-                const response = await fetch('./static/obj/assassin/assassin.obj');  
+                // const response = await fetch();  
+                 const response = await fetch('./static/obj/'+this.fileName+'/'+this.fileName+'.obj');  
                 const text:string = await response.text();
                 this.parseOBJ(text);
                 console.log("THIS",this);
@@ -62,9 +66,14 @@ export class Model{
 
     }
 
+    nfaces():number{
+        return this.faces.length/3;
+    }
+    
     nverts():number{
         return this.verts.length;
     }
+
     vertIndex(index:number):Vector3{
         return this.verts[index];
     }
@@ -73,9 +82,6 @@ export class Model{
     }
     normalIndex(index:number):Vector3{
         return this.norms[index];
-    }
-    nfaces():number{
-        return this.facetVrt.length;
     }
     // faceVrtIndex(index:number):number{
     //     return this.facetVrt[index];

@@ -7,4 +7,8 @@ export const routes = [
         path: '/drawframe',
         component: () => import('../pages/DrawFrame/index.vue'),
     },
+    {
+        path: '/drawfaces',
+        component: () => import('../pages/DrawFaces/index.vue'),
+    },
 ]

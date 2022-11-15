@@ -23,7 +23,6 @@ const panelDrag = (sidePanelPos, panelID, e) => {
     dragPosition.x = e.clientX;
     dragPosition.y = e.clientY;
     nodeLines.mainPanelLine.show("draw");
-
     // scroll not support now.
     if (window.scrollY === 0) {
         document.body.style.overflow = 'hidden'
@@ -62,15 +61,15 @@ const panelDrag = (sidePanelPos, panelID, e) => {
 
 
 // page default ui.
-const setDefaultUI = (component) => {
+const setDefaultUI = (slotID) => {
     let options = {
         startSocket: 'right',
         endSocket: 'top',
         color: 'rgba(255, 255, 0, 0.9)',
     };
     nodeLines.mainPanelLine = new LeaderLine(
-        document.getElementById(component.slotID.MAIN_PANEL_SLOT_ID),
-        document.getElementById(component.slotID.CORE_SLOT_TOP_ID),
+        document.getElementById(slotID.MAIN_PANEL_SLOT_ID),
+        document.getElementById(slotID.CORE_SLOT_TOP_ID),
         options,
     );
 
@@ -83,7 +82,7 @@ const setDefaultUI = (component) => {
 }
 
 
-const setDebugPanelCon = (component) => {
+const setDebugPanelCon = (slotID) => {
     let options = {
         startSocket: 'right',
         endSocket: 'left',
@@ -91,8 +90,8 @@ const setDebugPanelCon = (component) => {
     };
 
     nodeLines.debugPanelLine = new LeaderLine(
-        document.getElementById(component.slotID.DEBUG_OUT_SLOT_ID),
-        document.getElementById(component.slotID.DEBUG_IN_SLOT_ID),
+        document.getElementById(slotID.DEBUG_OUT_SLOT_ID),
+        document.getElementById(slotID.DEBUG_IN_SLOT_ID),
         options,
     );
     nodeLines.debugPanelLine.hide('none');
@@ -101,23 +100,29 @@ const setDebugPanelCon = (component) => {
 
 // some normal callbacks for param.
 const globalUiCallbacks = {
-    updatePoint: (sectionParams, Render, pointName) => {
+    updatePoint: (sectionParams, Render,pointName) => {
         return function (event,ui) {
             sectionParams[pointName] = ui.value;
-            Render();
+            Render()
         }
     },
-    updateValue: (sectionParams,Render, valueName) => {
+    updateValue: (sectionParams, Render,valueName) => {
         return function (event,ui) {
-
             sectionParams[valueName] = ui.value;
-            Render();
+            Render()
         }
     },
-    updatePointArray:(sectionParams, Render, index) =>{
+    updateVector3:(sectionParams, Render,vector3Name)=>{
+        return function(event, ui){
+            sectionParams[vector3Name] = ui.value;
+            Render()
+        }
+    },
+
+    updatePointArray:(sectionParams, Render,index) =>{
         return function (event, ui){
             sectionParams[valueName][index] = ui.value;
-            Render();
+            Render()
         }
     }
 

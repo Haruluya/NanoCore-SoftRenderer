@@ -1,10 +1,14 @@
 
-import {Point, Vector2, Vector3, Vector4} from "./point"
+
 import { Polygon } from "./poloygon";
 import { Edge } from "./edge";
 import {Barycentric} from './math'
 import { Model } from "./model";
 import { Shader } from "./shaders/shader";
+import { Point } from "./point";
+import { Vector2 } from "./vector2";
+import { Vector3 } from "./vector3";
+import { Vector4 } from "./vector4";
 
 interface ImageData{
     data:Uint8ClampedArray,
@@ -205,8 +209,6 @@ export const DrawPointInGrid = (
 export const DrawLineInGrid = (
     ctx:CanvasRenderingContext2D,
     girdSize:number,
-    width:number,
-    height:number,
     beginPoint:Point, 
     endPoint:Point, 
     color:Vector3,
@@ -338,6 +340,114 @@ export const DrawGrid = (
 
 }
 
+export const DrawTriangleInGrid = (ctx:CanvasRenderingContext2D,gridSize:number,t0:Point,t1:Point,t2:Point,color:Vector3)=>{
+  // EdgeTablePolygon.
+    // check amount of point.
+    
+    const points = new Polygon([t0,t1,t2]);
+
+    if (points.size() < 3)
+        return;
+    let i, j, x0 = 0, x1 = 0, y, tx, temp;
+    // amount of scanline.
+    let scanLines, min, max;
+
+    //edge table.
+    let ET:any = {};
+    //active edge table.
+    let AET:Array<Edge> = [];
+    //table of intersection point.
+    let arr:Array<number> = [];
+    //begin point.
+    let p0;
+    //end point.
+    let p1;
+    // ptr of node.
+    let pNode;
+
+    min = points.minPointY();
+    max = points.maxPointY();
+    scanLines = max - min;
+
+    //Processing side by side, inserting the information of each edge into the ET.
+    for (let i = 0; i < points.size(); i++) {
+        if (i < points.size() - 1) {
+            p0 = points.indexValue(i);
+            p1 = points.indexValue(i + 1);
+        }
+        else {
+            p0 = points.indexValue(i);
+            p1 = points.indexValue(0);
+        }
+
+        if (p0.Y > p1.Y) {
+            temp = p0;
+            p0 = p1;
+            p1 = temp;
+        }
+
+        if (p0.Y != p1.Y) {
+            pNode = new Edge(p0.X, (p1.X - p0.X) / (p1.Y - p0.Y), (p1.Y - 1));
+            if (!ET[p0.Y - min]) {
+                ET[p0.Y - min] = [];
+            }
+
+            ET[p0.Y - min].push(pNode);
+        }
+
+    }
+
+    for (let i = 0; i < scanLines; i++) {
+
+        y = i + min;
+        if (ET[i]) {
+            ET[i].forEach(element => {
+                AET.push(element);
+            });
+
+        }
+        ET[i] = null;
+
+        //Dealing with active edge table AET.
+        if (AET) {
+            for (let i = 0; i < AET.length;) {
+                if (AET[i].Ymax < y) {
+                    AET.splice(i, 1);
+
+                } else {
+                    i++;
+                }
+            }
+        }
+        //Activate the edge table is not empty, find the intersection, sort, draw a line.
+        if (AET) {
+
+            AET.forEach(element => {
+                arr.push(element.X);
+                element.X = element.X + element.Dx;
+            });
+
+            arr.sort();
+
+            for (j = 0; j < arr.length; j++) {
+                if (j % 2 == 0) {
+                    tx = arr[j];
+                    if (arr[j] - tx)
+                        x0 = tx + 1;
+                    else
+                        x0 = tx;
+                    x1 = arr[j + 1];
+                }
+                DrawLineInGrid(ctx,gridSize,new Point(x0,y),new Point(x1, y),color);
+            }
+            arr = [];
+        }
+    }
+    ET = [];
+}
+
+
+
 const MAX_DEEP = 9999;
 const MIN_DEEP = -9999;
 
@@ -373,11 +483,11 @@ export const DrawTriangleWithZBuffer = (zbuffer:Array<number>,imgData:ImageData,
 }
 
 
-export const DrawTriangleByEdgeTablePolygon = (imgData:ImageData,pointArray:Array<Point>,color:Vector3)=>{
+export const DrawTriangleByImageData = (imgData:ImageData,t0:Point,t1:Point,t2:Point,color:Vector3)=>{
     // EdgeTablePolygon.
     // check amount of point.
     
-    const points = new Polygon(pointArray);
+    const points = new Polygon([t0,t1,t2]);
 
     if (points.size() < 3)
         return;
@@ -479,6 +589,20 @@ export const DrawTriangleByEdgeTablePolygon = (imgData:ImageData,pointArray:Arra
     ET = [];
 }
 
+export const DrawTriangleByCanvasAPI = (
+    ctx:CanvasRenderingContext2D,
+    t0:Point,
+    t1:Point,
+    t2:Point,
+    color:Vector3
+    )=>{
+    ctx.fillStyle = 'rgb('+color.X+','+color.Y+','+color.Z+')';
+    ctx.beginPath();
+    ctx.moveTo(t0.X,t0.Y);
+    ctx.lineTo(t1.X,t1.Y);
+    ctx.lineTo(t2.X,t2.Y);
+    ctx.fill()
+}
 
 export const DrawTriangle = (imgData:ImageData,t0:Point,t1:Point,t2:Point)=>{
 
@@ -499,9 +623,7 @@ export const DrawTriangle = (imgData:ImageData,t0:Point,t1:Point,t2:Point)=>{
         t1 = t2;
         t2 = temp; 
     };
-    console.log(t0,t1,t2)
     let total_height = t2.Y-t0.Y;
-    console.log(total_height)
     for (let i=0; i< total_height; i++) {
         //根据t1将三角形分割为上下两部分
         let second_half = i>t1.Y-t0.Y || t1.Y==t0.Y;
@@ -522,6 +644,10 @@ export const DrawTriangle = (imgData:ImageData,t0:Point,t1:Point,t2:Point)=>{
         }
     }
 }
+
+
+
+
 
 let ix = 1;
 export const DrawTriangleWithUV = (
@@ -662,10 +788,6 @@ export const DrawLineByCanvasApi = (
 
     ctx.moveTo(beginPoint.X, beginPoint.Y);
     ctx.lineTo(endPoint.X, endPoint.Y);
-    ix++;
-    if (ix < 1000){
-        console.log(beginPoint,endPoint)
-    }
 
     ctx.strokeStyle = 'rgb('+color.X+','+color.Y+','+color.Z+')';
 }

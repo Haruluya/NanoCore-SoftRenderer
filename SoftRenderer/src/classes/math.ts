@@ -1,5 +1,8 @@
+import { Vector2 } from "./vector2";
+import { Vector3 } from "./vector3";
+import { Vector4 } from "./vector4";
 
-import { Vector2, Vector3, Vector4} from "./point";
+
 export const Barycentric = (A:Vector2,B:Vector2,C:Vector2,P:Vector2):Vector3=>{
     let s:Array<Vector3> = [new Vector3(0,0,0),new Vector3(0,0,0),new Vector3(0,0,0)];
     for (let i=2; i--; ) {

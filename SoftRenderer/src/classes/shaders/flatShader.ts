@@ -1,6 +1,8 @@
 import { Shader,model,worldToScreen,fragmentResult } from "./shader";
-import {Vector2, Vector3, Vector4} from '../point'
+
 import {m2v, matrixMutiply, v2m, vectorCross, vectorMultiply, vectorNormalize, vectorSubtract} from '../math'
+import { Vector3 } from "../vector3";
+import { Vector4 } from "../vector4";
 
 export class FlatShader extends Shader{
     private varyingVerts:Array<Vector4> = [];

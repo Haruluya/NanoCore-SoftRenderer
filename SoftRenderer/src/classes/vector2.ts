@@ -1,4 +1,4 @@
-export class Point {
+export class Vector2{
     get X():number{return this[0];}
     set X(x:number){this[0] = x}
     get Y():number{return this[1];}
@@ -7,8 +7,8 @@ export class Point {
         this[0] = x; this[1] = y;
     }
     [index:number]:number;
-    add(b:Point){
-        return new Point(
+    add(b:Vector2){
+        return new Vector2(
             this.X + b.X,
             this.Y + b.Y
         )
@@ -25,9 +25,16 @@ export class Point {
             this.Y *t,
         )
     }
+    [Symbol.iterator]() { 
+        let index = 0,target = this;
+        return { 
+            next() :{done:boolean,value:number | undefined}{ 
+                if (index < 2) { 
+                    return { done: false, value: target[index++] }; 
+                } else { 
+                    return { done: true, value: undefined }; 
+                } 
+            } 
+        }; 
+    } 
 }
-
-
-
-
-

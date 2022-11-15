@@ -1,5 +1,7 @@
-import {Vector2, Vector3, Vector4} from '../point'
+
 import { Model } from '../model';
+import { Vector3 } from '../vector3';
+import { Vector4 } from '../vector4';
 
 /*
 @author:Haruluya.
