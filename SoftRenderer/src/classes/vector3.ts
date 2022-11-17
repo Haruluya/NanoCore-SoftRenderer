@@ -2,7 +2,7 @@ import { Vector2 } from "./vector2";
 
 export class Vector3{
     get X():number{return this[0];}
-    set X(x:number){this[0] = x}
+    set X(x:number){this[0] = x;}
     get Y():number{return this[1];}
     set Y(y:number){ this[1] = y}
     get Z():number{return this[2];}
@@ -35,6 +35,9 @@ export class Vector3{
     }
     getVec2(){
         return new Vector2(this.X,this.Y);
+    }
+    copy(){
+        return new Vector3(this.X,this.Y,this.Z)
     }
     [Symbol.iterator]() { 
         let index = 0,target = this;

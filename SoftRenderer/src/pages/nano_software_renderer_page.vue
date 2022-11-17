@@ -54,6 +54,7 @@ import { defineComponent,defineExpose, reactive, ref,onMounted, computed,nextTic
 import uiSetting from "./ui-setting"
 import { Point } from '/classes/point';
 import { UIItem } from '/classes/uiItem';
+import { Vector3 } from '/classes/vector3';
 /*
     @author:haruluya.
     @des:This component is used to make the source code more concise.
@@ -93,6 +94,7 @@ export default defineComponent({
 
         // vue component value.
         let currentModelFile = 0;
+        let currentDrawModel = 0;
         let showDebug = ref<boolean>(false);
         let debugContent = ref([{}]);
         const slotID = {
@@ -116,8 +118,8 @@ export default defineComponent({
             cube,
             head
         };
-        const modelFileData = ["dog","assassin","cube","head"];
-        const drawModelData = ["CanvasApi","Grid", "ImgData"];
+        const modelFileData = ["head","assassin","cube","dog"];
+        const drawModelData = ["CanvasApi","Grid","ImgData" ];
 
         //ui
         let sectionUI = ref<Array<UIItem>>([]);
@@ -151,14 +153,22 @@ export default defineComponent({
         const Render = ()=>{
             uiSetting.resizeCanvasToDisplaySize(getCanvas());
             debugContent.value = [{}];
-            //model change.
+            //model changed.
             if (currentModelFile != sectionParams.modelFile){
                 currentModelFile = sectionParams.modelFile;
-                console.log(modelFileData[sectionParams.modelFile])
                 model.value = new Model(modelFileData[sectionParams.modelFile]);  
                 model.value.getModel().then(Render);
+                context.emit("ModelChange")
                 return;  
             }
+
+            //draw model changed.
+            if (currentDrawModel != sectionParams.drawModel){
+                currentDrawModel = sectionParams.drawModel;
+                context.emit("DrawModelChange",Render)
+                return;
+            }
+
             //grid.
             const gridx = Math.floor(canvas.width / sectionParams.girdSize) - 1;
             const gridy = Math.floor(canvas.height / sectionParams.girdSize) - 1;
@@ -287,9 +297,13 @@ export default defineComponent({
             return modelFileData[sectionParams.modelFile];
         }
 
-        const getWorldToScreen = (v:Point)=>{
+        const getWorldToScreen = (v:Array<Vector3>):Array<Vector3>=>{
             return modelData[modelFileData[sectionParams.modelFile]].WorldToScreen(v,canvas,sectionParams.offset);
         }
+
+        const getOffset = ()=>{
+            return sectionParams.offset;
+        } 
 
         const addUIItem = (uiItem:UIItem)=>{
             sectionUI.value.push(uiItem);
@@ -313,6 +327,7 @@ export default defineComponent({
             getModel,
             getDrawModel,
             getModelFile,
+            getOffset,
 
             Render,
 

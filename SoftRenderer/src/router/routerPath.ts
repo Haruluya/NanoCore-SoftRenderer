@@ -11,4 +11,8 @@ export const routes = [
         path: '/drawfaces',
         component: () => import('../pages/DrawFaces/index.vue'),
     },
+    {
+        path: '/zbuffer',
+        component: () => import('../pages/ZBuffer/index.vue'),
+    },
 ]

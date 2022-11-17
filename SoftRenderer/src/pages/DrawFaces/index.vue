@@ -3,19 +3,23 @@
         :prop_des_data="desData" 
         @Init="Init"
         @Render="Render"
+        @ModelChange="ModelChange"
         ref="page" 
     /> 
 </template>
 
 <script lang='ts'>
 import { Model } from '../../classes/model';
-import { defineComponent, Ref, ref} from 'vue';
+import { defineComponent, ref} from 'vue';
 import {Vector3} from '/src/classes/vector3'
-import { DrawGrid, DrawLineByBresenham, DrawLineByCanvasApi, DrawLineInGrid, DrawTriangleByCanvasAPI, DrawTriangleByImageData, DrawTriangleInGrid, Hex2Rgb } from '../../classes/utils';
+import { DrawGrid, DrawTriangleByCanvasAPI, DrawTriangleByImageData, DrawTriangleInGrid, Hex2Rgb, InitGridBuffer } from './utils';
 import nano_cg_experiment_page from '../nano_software_renderer_page.vue'
 import { Point } from '../../classes/point';
 import uiSetting from '../ui-setting';
+import {FaceCache} from '../../classes/faceCache'
 import { vectorCross, vectorMultiply, vectorNormalize, vectorSubtract } from '../../classes/math';
+import { Vector2 } from '/classes/vector2';
+import { off } from 'process';
 const desData = {
     category: "SoftwareRenderer",
     name: "DrawFaces",
@@ -25,7 +29,7 @@ const desData = {
 }
 
 export default defineComponent({
-    name: 'DrawFrame',
+    name: 'DrawFaces',
     components:{nano_cg_experiment_page},
     setup(){
         //store. 
@@ -40,6 +44,7 @@ export default defineComponent({
         let getVertByFaceMap:(arg0:number,arg1:number)=> Vector3;
 
 
+        let facesCache:Array<FaceCache> = [];
 
 
         //section init.
@@ -51,7 +56,8 @@ export default defineComponent({
             sectionParams = page.value.getSectionParams();
             getWorldToScreen = page.value.getWorldToScreen;
             getVertByFaceMap = model.value?.getVertByFaceMap ? model.value?.getVertByFaceMap: (arg0:number,arg1:number)=> Vector3;
-            
+
+
             const lightDir = new Vector3(0,0,1);
             const normal = false;
 
@@ -79,105 +85,48 @@ export default defineComponent({
             DrawFaces[page.value.getDrawModel()]();
         }
 
-        //draw frame by methods.
+        //draw faces by methods.
         const DrawFaces:{[index:string]:()=>void;} = {
             Grid:()=>{
-                    DrawGrid(ctx,sectionParams.girdSize,canvas.width,canvas.height);
-                    const c = Hex2Rgb(sectionParams.color);
-                    let color = new Vector3(c[0],c[1],c[2]);
-                    let points:Array<Point> = [];
-                    let worldVec3:Array<Vector3> = [];
-                    let normalPerFace:Vector3 = new Vector3(0,0,0);
-                    let worldPoint:Vector3 =  new Vector3(0,0,0);
-                    let intensity = 1;
-                    model.value?.facetVrt.forEach((element,index) => {
-                        points = [];
-                        worldVec3 = [];
-                        for (let j = 0; j < 3; j++){
-                            worldPoint = getVertByFaceMap.call(model.value,index,j);
-                            worldVec3.push(
-                                worldPoint,
-                            )
-                            points.push(
-                                getWorldToScreen(getVertByFaceMap.call(model.value,index,j))
-                            )
-                        }
-                        if(sectionParams.normal){
-                            normalPerFace = vectorNormalize(
-                                vectorCross(
-                                    vectorSubtract(worldVec3[1],worldVec3[0]),
-                                    vectorSubtract(worldVec3[2],worldVec3[0])
-                                )
-                            )
-                            intensity = vectorMultiply(normalPerFace,sectionParams.lightDir);
-                        }
-        
-                        if (intensity > 0){
-                            DrawTriangleInGrid(ctx,sectionParams.girdSize,points[0],points[1],points[2],color.mutiply(intensity));
-                        }
-                    });
-
+                InitGridBuffer(canvas,sectionParams.girdSize);
+                DrawGrid(ctx,sectionParams.girdSize,canvas.width,canvas.height);
+                const args = [ctx,sectionParams.girdSize,canvas.width,canvas.height];
+                Draw(DrawTriangleInGrid,args);
             },
             ImgData:()=>{
                 imgData = ctx.createImageData(canvas.width,canvas.height);
-                const c = Hex2Rgb(sectionParams.color);
-                let color = new Vector3(c[0],c[1],c[2]);
-                let points:Array<Point> = [];
-                let worldVec3:Array<Vector3> = [];
-                let normalPerFace:Vector3 = new Vector3(0,0,0);
-                let worldPoint:Vector3 =  new Vector3(0,0,0);
-                let intensity = 1;
-                model.value?.facetVrt.forEach((element,index) => {
-                    points = [];
-                    worldVec3 = [];
-                    for (let j = 0; j < 3; j++){
-                        worldPoint = getVertByFaceMap.call(model.value,index,j);
-                        worldVec3.push(
-                            worldPoint,
-                        )
-                        points.push(
-                            getWorldToScreen(getVertByFaceMap.call(model.value,index,j))
-                        )
-                    }
-                    if(sectionParams.normal){
-                        normalPerFace = vectorNormalize(
-                            vectorCross(
-                                vectorSubtract(worldVec3[1],worldVec3[0]),
-                                vectorSubtract(worldVec3[2],worldVec3[0])
-                            )
-                        )
-                        intensity = vectorMultiply(normalPerFace,sectionParams.lightDir);
-                    }
-    
-                    if (intensity > 0){
-                        DrawTriangleByImageData(imgData,points[0],points[1],points[2],color.mutiply(intensity));
-                    }
-                });
+                const args = [imgData];
+                Draw(DrawTriangleByImageData,args);
                 ctx.putImageData(imgData,0,0);
             },
             CanvasApi:()=>{
+                const args = [ctx];
+                Draw(DrawTriangleByCanvasAPI,args);
+            }
+        }
 
-                const c = Hex2Rgb(sectionParams.color);
+        const Draw = (modelFun:any,args:Array<any>)=>{
+             //Temp value defined before loop.
+             const c = Hex2Rgb(sectionParams.color);
                 let color = new Vector3(c[0],c[1],c[2]);
                 let points:Array<Point> = [];
                 let worldVec3:Array<Vector3> = [];
                 let normalPerFace:Vector3 = new Vector3(0,0,0);
                 let worldPoint:Vector3 =  new Vector3(0,0,0);
                 let intensity = 1;
-                model.value?.facetVrt.forEach((element,index) => {
-                    points = [];
-                    worldVec3 = [];
-                    for (let j = 0; j < 3; j++){
-                        worldPoint = getVertByFaceMap.call(model.value,index,j);
-                        worldVec3.push(
-                            worldPoint,
-                        )
-                        points.push(
-                            getWorldToScreen(worldPoint)
-                        )
-                    }
-                   
-                    if(sectionParams.normal){
+
+                //first init.
+                if (!facesCache.length){
+                    model.value?.facetVrt.forEach((element,index) => {
+                        points = [];
+                        worldVec3 = [];
+
+                        for (let j = 0; j < 3; j++){
+                            worldPoint = getVertByFaceMap.call(model.value,index,j);
+                            worldVec3.push(worldPoint,)
+                            points.push(getWorldToScreen(worldPoint))
+                        }
+                        // normal just caculate once.
                         normalPerFace = vectorNormalize(
                             vectorCross(
                                 vectorSubtract(worldVec3[1],worldVec3[0]),
@@ -185,14 +134,45 @@ export default defineComponent({
                             )
                         )
                         intensity = vectorMultiply(normalPerFace,sectionParams.lightDir);
-                    }
-    
-                    if (intensity > 0){
-                        DrawTriangleByCanvasAPI(ctx,points[0],points[1],points[2],color.mutiply(intensity));
-                    }
-                });
+                        //cache.
+                        facesCache.push({points,normal:normalPerFace})
 
-            }
+                        // if normal shutdown.
+                        if (!sectionParams.normal){
+                            intensity = 1;
+                        }
+                        
+                        if (intensity > 0){
+                            modelFun(...args,points[0],points[1],points[2],color.mutiply(intensity));
+                        }
+                        
+                    });
+                }else{
+                    //with cache.
+                    let p:Array<Vector3> = [];
+                    let offset = page.value.getOffset();
+                    facesCache.forEach(e => {
+                        for(let i = 0; i < e.points.length; i++){
+                            p[i] = new Vector3(
+                                e.points[i].X + offset.x,
+                                e.points[i].Y + offset.y,
+                                e.points[i].Z    
+                            );
+                        }
+                        let intensity = vectorMultiply(e.normal,sectionParams.lightDir);
+                        if (intensity > 0){
+                            modelFun(...args,p[0],p[1],p[2],
+                                color.mutiply(sectionParams.normal?intensity:1)
+                            );
+                        }
+                    });
+                }
+
+        }
+        
+        //while model changed.
+        const ModelChange = ()=>{
+            facesCache = []
         }
 
         return{
@@ -200,6 +180,7 @@ export default defineComponent({
             page,
             Init,
             Render,
+            ModelChange
         }
     }
 })

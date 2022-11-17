@@ -4,6 +4,7 @@ import Logo from "./assets/images/Logo.png"
 const menuData = [
   {name:"DrawFrame",link:"drawframe"},
   {name:"DrawFaces",link:"drawfaces"},
+  {name:"ZBuffer",link:"zbuffer"},
   {name:"Camera",link:"camera"},
   {name:"Shader",link:"shader"},
   {name:"BlinePhone",link:"blinephone"},
