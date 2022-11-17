@@ -118,7 +118,12 @@ const globalUiCallbacks = {
             Render()
         }
     },
-
+    updateChildVector3:(sectionParams, Render,childName,vector3Name,)=>{
+        return function(event, ui){
+            sectionParams[childName][vector3Name] = ui.value;
+            Render()
+        }
+    },
     updatePointArray:(sectionParams, Render,index) =>{
         return function (event, ui){
             sectionParams[valueName][index] = ui.value;

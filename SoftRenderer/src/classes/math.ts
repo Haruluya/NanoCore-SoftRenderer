@@ -2,9 +2,8 @@ import { Vector2 } from "./vector2";
 import { Vector3 } from "./vector3";
 import { Vector4 } from "./vector4";
 
-
-export const Barycentric = (A:Vector2,B:Vector2,C:Vector2,P:Vector2):Vector3=>{
-    let s:Array<Vector3> = [new Vector3(0,0,0),new Vector3(0,0,0),new Vector3(0,0,0)];
+let s:Array<Vector3> = [new Vector3(0,0,0),new Vector3(0,0,0),new Vector3(0,0,0)];
+export const Barycentric = (A:Vector3,B:Vector3,C:Vector3,P:Vector3):Array<number>=>{
     for (let i=2; i--; ) {
         s[i][0] = C[i]-A[i];
         s[i][1] = B[i]-A[i];
@@ -12,15 +11,16 @@ export const Barycentric = (A:Vector2,B:Vector2,C:Vector2,P:Vector2):Vector3=>{
     }
     let u:Vector3 = vectorCross(s[0],s[1]);
     if (Math.abs(u[2])>1e-2)
-        return new Vector3(1.-(u.X+u.Y)/u.Z, u.Y/u.Z, u.X/u.Z);
+        return [1.-(u[0]+u[1])/u[2], u[1]/u[2], u[0]/u[2]];
 
-    return new Vector3(-1,1,1);
+    return [-1,1,1];
 }
-
+let crossVec:Vector3 = new Vector3(0,0,0);
 export const vectorCross = (v:Vector3, m:Vector3):Vector3=>{
-    return new Vector3(v[1] * m[2] - v[2] * m[1],
-        v[2] * m[0] - v[0] * m[2],
-        v[0] * m[1] - v[1] * m[0]);
+    crossVec[0] = v[1] * m[2] - v[2] * m[1];
+    crossVec[1] = v[2] * m[0] - v[0] * m[2];
+    crossVec[2] = v[0] * m[1] - v[1] * m[0];
+    return  crossVec;
   }
 
 export const vectorMultiply = (v:Vector3,m:Vector3):any=>{
@@ -258,7 +258,7 @@ export const lookAt = (cameraPosition:Vector3, target:Vector3, up:Vector3, dst?:
 }
 
 export const degToRad = (d:number):number=> {
-    return d * Math.PI / 180;
+    return Math.floor(d * Math.PI / 180);
 }
 
 export const v2m = (v:Vector3):Float32Array=>{
@@ -286,10 +286,10 @@ interface Transfrom{
 }
 
 export const getTransformMatrix = (transfrom:Transfrom) =>{
-    let matrix = xRotation(0);
+    let matrix = zRotation(0);
     matrix = translate3d(matrix, transfrom.translation[0],transfrom. translation[1], transfrom.translation[2]);
-    matrix = xRotate(matrix, transfrom.rotation[0]);
-    matrix = yRotate(matrix, transfrom.rotation[1]);
+    matrix = xRotate(matrix, transfrom.rotation[1]);
+    matrix = yRotate(matrix, transfrom.rotation[0]);
     matrix = zRotate(matrix, transfrom.rotation[2]);
     matrix = scale3d(matrix,transfrom.scale[0], transfrom.scale[1], transfrom.scale[2]);
     return matrix;

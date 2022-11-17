@@ -15,4 +15,8 @@ export const routes = [
         path: '/zbuffer',
         component: () => import('../pages/ZBuffer/index.vue'),
     },
+    {
+        path: '/camera',
+        component: () => import('../pages/Camera/index.vue'),
+    },
 ]

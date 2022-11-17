@@ -5,6 +5,7 @@ import { Vector3 } from "../../classes/vector3";
 import { Barycentric, vectorMultiply } from "../../classes/math";
 import { Vector2 } from "../../classes/vector2";
 import { ZbufferPageCache } from "/classes/zbufferPageCache";
+import { Vector4 } from "../../classes/vector4";
 
 const MAX_DEEP = 9999;
 
@@ -15,6 +16,7 @@ let pointCache:Array<Array<number>> = [];
 
 
 export const InitCacheCtx = (cache:ZbufferPageCache)=>{
+    console.log(cache)
     normalCache = cache.normals;
     pointCache = cache.points;
 }
@@ -487,17 +489,19 @@ export const DrawLineByBresenham = (
 }
 
 export const DrawModelByImageDataWithZBufferAndCache = ( 
-    imgData:ImageData,color:Vector3,offset:{x:number,y:number},lightDir:Vector3
+    imgData:ImageData,color:Vector3,offset:{x:number,y:number},lightDir:Vector3,
 )=>{
 
     let intensity = 0;
     let normalVec3 = new Vector3(0,0,0);
-    pointCache.forEach((P,i)=>{
+    let p = new Vector3(0,0,0);
+    pointCache.forEach((e,i)=>{
+        p.X = e[0]; p.Y = e[1];p.Z = e[2];
         normalVec3.X = normalCache[i][0] 
         normalVec3.Y = normalCache[i][1]; 
         normalVec3.Z = normalCache[i][2];
         intensity = vectorMultiply(normalVec3,lightDir);
-        DrawPointByImgData(imgData,P[0]+offset.x, P[1]+offset.y, color.mutiply(intensity));
+        DrawPointByImgData(imgData,p.X+offset.x, p.Y+offset.y, color.mutiply(intensity));
     })
 }
 

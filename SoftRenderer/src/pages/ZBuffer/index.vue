@@ -130,7 +130,10 @@ export default defineComponent({
                     //with cache.
                     console.log("cache")
                     let offset = page.value.getOffset();
-                    let lightDir = sectionParams.lightDir.copy()
+                    console.log(sectionParams.lightDir)
+
+                    // do not use ref of page for params.
+                    let lightDir = new Vector3(sectionParams.lightDir[0],sectionParams.lightDir[1],sectionParams.lightDir[2])
                     cacheFun(
                         ...args,
                         color,
@@ -143,6 +146,7 @@ export default defineComponent({
         //while model changed.
         const ModelChange = ()=>{
             ClearBuffer();
+            InitCacheCtx({normals:[],points:[]});
             cacheOver = false;
         }
 
@@ -150,7 +154,7 @@ export default defineComponent({
         const DrawModelChange = (callback:any)=>{
             console.log("change model")
             ClearBuffer();
-            InitCacheCtx(zbufferPageCache);
+            InitCacheCtx({normals:[],points:[]});
             cacheOver = false;
             callback();
         }

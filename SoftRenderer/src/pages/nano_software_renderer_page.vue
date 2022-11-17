@@ -53,8 +53,9 @@ import { Model } from '../classes/model';
 import { defineComponent,defineExpose, reactive, ref,onMounted, computed,nextTick} from 'vue';
 import uiSetting from "./ui-setting"
 import { Point } from '/classes/point';
-import { UIItem } from '/classes/uiItem';
-import { Vector3 } from '/classes/vector3';
+import { UIItem } from '../classes/uiItem';
+import { Vector3 } from '../classes/vector3';
+import { degToRad, getTransformMatrix, inverse, lookAt, matrixMutiply, perspective } from '../classes/math';
 /*
     @author:haruluya.
     @des:This component is used to make the source code more concise.
@@ -89,8 +90,27 @@ export default defineComponent({
             offset:{x:0,y:0},
             color:"#ffffff",
             drawModel:0,
-            modelFile:0
+            modelFile:0,
+            camera:{
+                target:new Vector3(0, 0, 0),
+                position:new Vector3(0, 0, -1),
+                up:new Vector3(0,-1,0)  
+            },
+            perspective:{
+                aspect:0,
+                fieldOfViewRadians: degToRad(60),
+                zNear: 1,
+                zFar: 20,
+            },
+            transform:{
+                translation:new Vector3(200,-100,0),
+                rotation:new Vector3(degToRad(0),degToRad(0),degToRad(0)),
+                scale:new Vector3(120,0,100)
+            }
         });
+
+
+        let mvpMatrix:Float32Array = new Float32Array([])
 
         // vue component value.
         let currentModelFile = 0;
@@ -118,8 +138,8 @@ export default defineComponent({
             cube,
             head
         };
-        const modelFileData = ["head","assassin","cube","dog"];
-        const drawModelData = ["CanvasApi","Grid","ImgData" ];
+        const modelFileData = ["head","cube","assassin","dog"];
+        const drawModelData = ["ImgData","CanvasApi","Grid" ];
 
         //ui
         let sectionUI = ref<Array<UIItem>>([]);
@@ -142,9 +162,10 @@ export default defineComponent({
             // set canvas pixel.
             uiSetting.resizeCanvasToDisplaySize(getCanvas());
             
-
-
-
+            //matrix.
+            sectionParams.perspective.aspect = canvas.width/canvas.height;
+            sectionParams.transform.scale[1] = Math.floor(sectionParams.transform.scale[0] * canvas.height/canvas.width);
+            caculateMVP();
             //section init.
             context.emit('Init');
         }
@@ -175,6 +196,7 @@ export default defineComponent({
             //fps.
             const beforeTime = Date.now();
             ctx.clearRect(0,0,canvas.width,canvas.height)
+
 
             //section render.
             context.emit("Render");
@@ -305,12 +327,35 @@ export default defineComponent({
             return sectionParams.offset;
         } 
 
+        const getMvpMatrix = ()=>{
+            return mvpMatrix
+        }
+
         const addUIItem = (uiItem:UIItem)=>{
             sectionUI.value.push(uiItem);
         }
         const addParam = (param:{name:string,value:any})=>{
             sectionParams[param.name] = param.value;
         }
+
+        const caculateMVP = ()=>{
+            let projectionMatrix = perspective(
+                sectionParams.perspective.fieldOfViewRadians,
+                sectionParams.perspective.aspect,
+                sectionParams.perspective.zNear,
+                sectionParams.perspective.zFar
+            )
+            let cameraMatrix = lookAt(
+                sectionParams.camera.position,
+                sectionParams.camera.target,
+                sectionParams.camera.up
+            )
+            let viewMatrix = inverse(cameraMatrix);
+            let modelMatrix = getTransformMatrix(sectionParams.transform);
+            let viewProjectionMatrix = matrixMutiply(projectionMatrix,viewMatrix);
+            mvpMatrix = matrixMutiply(viewProjectionMatrix,modelMatrix);
+        }
+
 
         return{
             sectionParams,
@@ -328,6 +373,7 @@ export default defineComponent({
             getDrawModel,
             getModelFile,
             getOffset,
+            getMvpMatrix,
 
             Render,
 
@@ -339,7 +385,8 @@ export default defineComponent({
             getWorldToScreen,
 
             addUIItem,
-            addParam
+            addParam,
+            caculateMVP,
         }
     }
 })

@@ -39,6 +39,9 @@ export class Vector3{
     copy(){
         return new Vector3(this.X,this.Y,this.Z)
     }
+    toIntVec(){
+        return new Vector3(Math.floor(this.X),Math.floor(this.Y),Math.floor(this.Z))
+    }
     [Symbol.iterator]() { 
         let index = 0,target = this;
         return { 
