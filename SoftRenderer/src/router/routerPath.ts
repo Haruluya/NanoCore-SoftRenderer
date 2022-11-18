@@ -19,4 +19,8 @@ export const routes = [
         path: '/camera',
         component: () => import('../pages/Camera/index.vue'),
     },
+    {
+        path: '/texture',
+        component: () => import('../pages/Texture/index.vue'),
+    },
 ]

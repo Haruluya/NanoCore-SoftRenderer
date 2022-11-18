@@ -41,7 +41,15 @@
                 </div>
             </transition>
         </div>
+        <div class="textures" ref="texture" >
+            <canvas class="diffuse" :width="textureWidth" :height="textureHeight" v-show="false">
+            </canvas>
+            <canvas class="normal"  :width="textureWidth" :height="textureHeight" v-show="false">
+            </canvas>
+        </div>
+
     </div>
+
 </template>
 <script lang="ts">
 import dog from  '../../static/obj/dog/dog'
@@ -52,7 +60,6 @@ import head from  '../../static/obj/head/head'
 import { Model } from '../classes/model';
 import { defineComponent,defineExpose, reactive, ref,onMounted, computed,nextTick} from 'vue';
 import uiSetting from "./ui-setting"
-import { Point } from '/classes/point';
 import { UIItem } from '../classes/uiItem';
 import { Vector3 } from '../classes/vector3';
 import { degToRad, getTransformMatrix, inverse, lookAt, matrixMutiply, perspective } from '../classes/math';
@@ -78,11 +85,18 @@ export default defineComponent({
     setup(props,context){
         //origin canvas. 
         let nanoCanvas = ref();
+        let texture = ref();
 
         //canvas context.
         let canvas:HTMLCanvasElement;
         let ctx:CanvasRenderingContext2D;
         let imgData:ImageData;
+
+        //texture.
+        let textureWidth = 1024;
+        let textureHeight = 1024;
+        let textureImg:Array<{name:string,img:HTMLImageElement}> = [];
+        const textureId:{[index:string]:number} = {"diffuse":0,"normal":1}
 
         // basic params.
         let sectionParams:{[index:string]:any} = reactive({
@@ -109,8 +123,12 @@ export default defineComponent({
             }
         });
 
-
+        //matrix;
         let mvpMatrix:Float32Array = new Float32Array([])
+        let projectionMatrix:Float32Array = new Float32Array([]);
+        let viewMatrix:Float32Array = new Float32Array([]);
+        let modelMatrix:Float32Array = new Float32Array([]);
+
 
         // vue component value.
         let currentModelFile = 0;
@@ -165,7 +183,7 @@ export default defineComponent({
             //matrix.
             sectionParams.perspective.aspect = canvas.width/canvas.height;
             sectionParams.transform.scale[1] = Math.floor(sectionParams.transform.scale[0] * canvas.height/canvas.width);
-            caculateMVP();
+            caculateMatrix();
             //section init.
             context.emit('Init');
         }
@@ -206,8 +224,6 @@ export default defineComponent({
             debugLog("Grid","GridX: " + gridx + '.'+ "  GridY: " + gridy)
             debugLog("Model","ModelVerts: "+ model.value?.nverts() + "\tModelFaces: " + model.value?.nfaces());
             debugLog("DrawModel",drawModelData[sectionParams.drawModel])
-        
-   
         }
 
         //set pageui.
@@ -331,6 +347,10 @@ export default defineComponent({
             return mvpMatrix
         }
 
+        const getModelMatrix = ()=>{
+            return modelMatrix;
+        }
+
         const addUIItem = (uiItem:UIItem)=>{
             sectionUI.value.push(uiItem);
         }
@@ -338,8 +358,9 @@ export default defineComponent({
             sectionParams[param.name] = param.value;
         }
 
-        const caculateMVP = ()=>{
-            let projectionMatrix = perspective(
+
+        const caculateMatrix = ()=>{
+            projectionMatrix = perspective(
                 sectionParams.perspective.fieldOfViewRadians,
                 sectionParams.perspective.aspect,
                 sectionParams.perspective.zNear,
@@ -350,12 +371,35 @@ export default defineComponent({
                 sectionParams.camera.target,
                 sectionParams.camera.up
             )
-            let viewMatrix = inverse(cameraMatrix);
-            let modelMatrix = getTransformMatrix(sectionParams.transform);
+            viewMatrix = inverse(cameraMatrix);
+            modelMatrix = getTransformMatrix(sectionParams.transform);
             let viewProjectionMatrix = matrixMutiply(projectionMatrix,viewMatrix);
             mvpMatrix = matrixMutiply(viewProjectionMatrix,modelMatrix);
         }
 
+        // load all textureImg.
+        const loadTexture = async () => {
+            return await Promise.all(
+                textureImg.map((item)=> (
+                    new Promise(resolve=>(
+                        item.img.addEventListener('load',()=> {
+                            const textureCanvas = texture.value.children[textureId[item.name]];
+                            textureCanvas.getContext('2d').drawImage(item.img,0,0);
+                            model.value?.setTexture(item.name,textureCanvas);
+                            resolve(item.img);
+                        })
+                    ))
+                )
+            ))
+
+        }
+
+        //set texture.
+        const setTexture = (name:string,filePath:string)=>{
+            const img = new Image();
+            img.src = filePath;
+            textureImg.push({name,img});
+        }   
 
         return{
             sectionParams,
@@ -374,7 +418,7 @@ export default defineComponent({
             getModelFile,
             getOffset,
             getMvpMatrix,
-
+            getModelMatrix,
             Render,
 
             pageCallback,
@@ -386,7 +430,13 @@ export default defineComponent({
 
             addUIItem,
             addParam,
-            caculateMVP,
+            caculateMatrix,
+
+            texture,
+            textureWidth,
+            textureHeight,
+            setTexture,
+            loadTexture,
         }
     }
 })

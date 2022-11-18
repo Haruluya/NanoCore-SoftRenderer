@@ -13,22 +13,25 @@
 import { Model } from '../../classes/model';
 import { defineComponent, ref} from 'vue';
 import {Vector3} from '/src/classes/vector3'
-import { ClearBuffer, DrawModelByImageDataWithZBufferAndCache, DrawTriangleByImageDataWithZBuffer, DrawTriangleInGrid, DrawTriangleInGridWithZBuffer, DrawTriangleInGridWithZBufferAndCache, DrawTriangleWithZBufferByCavasAPI, Hex2Rgb, InitCacheCtx, InitZBuffer } from './utils';
+import { ClearBuffer, DrawModelByImageDataWithZBufferAndCache, DrawTriangleByImageDataWithZBuffer, DrawTriangleInGrid, DrawTriangleInGridWithZBuffer, DrawTriangleInGridWithZBufferAndCache, DrawTriangleWithZBufferByCavasAPI, Hex2Rgb, InitCacheCtx, InitUtilsCtx, InitZBuffer } from './utils';
 import nano_cg_experiment_page from '../nano_software_renderer_page.vue'
 import uiSetting from '../ui-setting';
 import { m2v4, matrixMutiply, vectorCross, vectorMultiply, vectorNormalize, vectorSubtract } from '../../classes/math';
 import { Vector4 } from '../../classes/vector4';
-import { CameraCache } from '../../classes/cameraCache';
+import { TextureCache } from '../../classes/textureCache';
+
+import diffuse from "../../../static/obj/head/diffuse.png"
+import { Vector2 } from '/classes/vector2';
 const desData = {
     category: "SoftwareRenderer",
-    name: "Camera",
+    name: "Texture",
     buttonContent: "查看源码",
-    title: "相机与变换",
-    content: "Camera and transform."
+    title: "UV与贴图",
+    content: "UV and texture."
 }
 
 export default defineComponent({
-    name: 'Camera',
+    name: 'Texture',
     components:{nano_cg_experiment_page},
     setup(){
 
@@ -43,7 +46,7 @@ export default defineComponent({
         let getVertByFaceMap:(arg0:number,arg1:number)=> Vector3;
 
 
-        let cameraCache:Array<CameraCache> = []
+        let textureCache:Array<TextureCache> = []
         let cacheOver = false;
 
         //section init.
@@ -94,7 +97,15 @@ export default defineComponent({
         const Render = ()=>{
             //matrix.
             page.value.caculateMatrix();
-            DrawModel[page.value.getDrawModel()]();
+            page.value.setTexture("diffuse",diffuse);
+            if(!cacheOver){
+                page.value.loadTexture().then(()=>{
+                    InitUtilsCtx(model.value);
+                    DrawModel[page.value.getDrawModel()]();
+                })
+            }else{
+                DrawModel[page.value.getDrawModel()]();
+            }
         }
 
         //draw faces by methods.
@@ -117,26 +128,27 @@ export default defineComponent({
             if (!cacheOver){
                 let worldVec4:Array<Vector4> = [];
                 let tNormals:Array<Vector3> = [];
+                let uv:Array<Vector2> = [];
                 model.value?.facetVrt.forEach((element,index) => {
                     points = [];
                     worldVec4 = [];
                     tNormals = [];
+                    uv = [];
                     for (let j = 0; j < 3; j++){
                         worldPoint = new Vector4(getVertByFaceMap.call(model.value,index,j),1);
                         worldVec4.push(
                             worldPoint,
                         )
                         worldPoint = m2v4(matrixMutiply(mvp,worldPoint.getMatrix()));
-                
-                        points.push(worldPoint.getVec3().toIntVec())
-
-                        tNormals.push(
-                            model.value?.getNormalByFaceMap(index,j)
-                        )
+                        points.push(worldPoint.getVec3().toIntVec());
+                        tNormals.push( model.value?.getNormalByFaceMap(index,j));
+                        if (model.value?.getUVByFaceMap(index,j)){
+                            uv.push(model.value?.getUVByFaceMap(index,j));
+                        }
 
                     }
-                    cameraCache.push({worldPoints:worldVec4,vertNormals:tNormals})
-                    initFun(...args,points,tNormals,color);      
+                    textureCache.push({worldPoints:worldVec4,vertNormals:tNormals,vertsUV:uv})
+                    initFun(...args,points,tNormals,uv,color);      
 
                 });
                 cacheOver = true;
@@ -144,7 +156,7 @@ export default defineComponent({
                 //with cache.
                 console.log("cache")
                 ClearBuffer();
-                cameraCache.forEach(e=>{
+                textureCache.forEach(e=>{
                     points = [];
                     for (let j = 0; j < 3; j++){
                         worldPoint = m2v4(matrixMutiply(mvp,e.worldPoints[j].getMatrix()));
@@ -152,7 +164,7 @@ export default defineComponent({
                             worldPoint.getVec3().toIntVec(),
                         )
                     }
-                    DrawTriangleByImageDataWithZBuffer(imgData,points,e.vertNormals,color);      
+                    DrawTriangleByImageDataWithZBuffer(imgData,points,e.vertNormals,e.vertsUV,color);      
                 })
                 
             }
@@ -161,7 +173,7 @@ export default defineComponent({
         //while model changed.
         const ModelChange = ()=>{
             ClearBuffer();
-            cameraCache = [];
+            textureCache = [];
             cacheOver = false;
         }
 

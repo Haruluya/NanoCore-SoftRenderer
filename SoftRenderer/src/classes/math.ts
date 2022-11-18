@@ -288,8 +288,8 @@ interface Transfrom{
 export const getTransformMatrix = (transfrom:Transfrom) =>{
     let matrix = zRotation(0);
     matrix = translate3d(matrix, transfrom.translation[0],transfrom. translation[1], transfrom.translation[2]);
-    matrix = xRotate(matrix, transfrom.rotation[1]);
-    matrix = yRotate(matrix, transfrom.rotation[0]);
+    matrix = xRotate(matrix, transfrom.rotation[0]);
+    matrix = yRotate(matrix, transfrom.rotation[1]);
     matrix = zRotate(matrix, transfrom.rotation[2]);
     matrix = scale3d(matrix,transfrom.scale[0], transfrom.scale[1], transfrom.scale[2]);
     return matrix;

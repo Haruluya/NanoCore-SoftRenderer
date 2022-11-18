@@ -38,6 +38,7 @@ export class Model{
     constructor(filename:Path){
         this.fileName = filename;
     } 
+    [index:string]:any
 
     async getModel(texture?:HTMLCanvasElement):Promise<void>{
         return new Promise<void>(async (resolve,reject)=>{
@@ -51,8 +52,7 @@ export class Model{
 
                 // this.diffuse = imgData?.data;
 
-                // const response = await fetch();  
-                 const response = await fetch('./static/obj/'+this.fileName+'/'+this.fileName+'.obj');  
+                const response = await fetch('./static/obj/'+this.fileName+'/'+this.fileName+'.obj');  
                 const text:string = await response.text();
                 this.parseOBJ(text);
                 console.log("THIS",this);
@@ -95,11 +95,11 @@ export class Model{
     getNormalByFaceMap(nindex:number,index:number):Vector3{
         return this.normalIndex(this.faces[nindex*3+index][2]);
     }
-
+    ix = 0;
     getDiffuseByUV(uv:Vector2):Vector3{
         let x = Math.floor(uv.X * 1023);
         // Be careful ! V dirction is inversed!
-        let y = Math.floor((1- uv.Y) * 1023);
+        let y = Math.floor((1-uv.Y) * 1023);
         // you can`t using float uv!!!
         if (!this.diffuse){
             console.log("DIFFUSE NOT FOUND!")
@@ -111,7 +111,17 @@ export class Model{
                 this.diffuse[(x+y*1024)*4 + 2],
             )
         }
+
     }
+
+    //set texture.
+    setTexture(name:string,texture:HTMLCanvasElement){
+        const ctx = texture.getContext('2d');
+        const imgData = ctx?.getImageData(0,0,texture.width,texture.height);
+        this[name] = imgData?.data;
+    }
+
+
 
     parseOBJ(text:string) {
 
