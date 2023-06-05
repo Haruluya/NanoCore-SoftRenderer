@@ -4,6 +4,7 @@
         @Init="Init"
         @Render="Render"
         @ModelChange="ModelChange"
+        @DrawModelChange="DrawModelChange"
         ref="page" 
     /> 
 </template>
@@ -11,11 +12,10 @@
 <script lang='ts'>
 import { Model } from '../../classes/model';
 import { defineComponent, ref} from 'vue';
-import {Vector3} from '/src/classes/vector3'
+import { Vector3 } from '../../classes/vector3';
 import { DrawGrid, DrawLineByBresenham, DrawLineByCanvasApi, DrawLineInGrid, Hex2Rgb, InitGridBuffer } from './utils';
 import nano_cg_experiment_page from '../nano_software_renderer_page.vue'
 import { Point } from '../../classes/point';
-import { off } from 'process';
 
 
 const desData = {
@@ -61,6 +61,7 @@ export default defineComponent({
         //draw frame by methods.
         const DrawFrame:{[index:string]:()=>void;} = {
             Grid:()=>{
+ 
                 //just for some pages.
                 InitGridBuffer(canvas,sectionParams.girdSize);
                 DrawGrid(ctx,sectionParams.girdSize,canvas.width,canvas.height);
@@ -99,6 +100,7 @@ export default defineComponent({
             }
         }
 
+        //unit draw function.
         const Draw = (modelFun:any,args:any)=>{
                 let offset = page.value.getOffset();
                 if(!frameCache.length) {
@@ -111,7 +113,6 @@ export default defineComponent({
                             let p0 = getWorldToScreen(v0);
                             let p1 = getWorldToScreen(v1);
                             frameCache.push([p0,p1]);
-
                             modelFun(...args,p0,p1); 
                         }
                     });
@@ -132,13 +133,18 @@ export default defineComponent({
         const ModelChange = ()=>{
             frameCache = []
         }
+        //while draw model changed.
+        const DrawModelChange = ()=>{
+            Render();
+        }
 
         return{
             desData,
             page,
             Init,
             Render,
-            ModelChange
+            ModelChange,
+            DrawModelChange
         }
     }
 })

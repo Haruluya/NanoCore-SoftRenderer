@@ -16,6 +16,7 @@ export const Barycentric = (A:Vector3,B:Vector3,C:Vector3,P:Vector3):Array<numbe
     return [-1,1,1];
 }
 let crossVec:Vector3 = new Vector3(0,0,0);
+
 export const vectorCross = (v:Vector3, m:Vector3):Vector3=>{
     crossVec[0] = v[1] * m[2] - v[2] * m[1];
     crossVec[1] = v[2] * m[0] - v[0] * m[2];

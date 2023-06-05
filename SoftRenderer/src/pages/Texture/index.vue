@@ -1,6 +1,7 @@
 <template>
     <nano_cg_experiment_page 
         :prop_des_data="desData" 
+        :prop_page_config="{mutiMode:false,offset:false}"
         @Init="Init"
         @Render="Render"
         @ModelChange="ModelChange"
@@ -12,7 +13,7 @@
 <script lang='ts'>
 import { Model } from '../../classes/model';
 import { defineComponent, ref} from 'vue';
-import {Vector3} from '/src/classes/vector3'
+import {Vector3} from '../../classes/vector3'
 import { ClearBuffer, DrawModelByImageDataWithZBufferAndCache, DrawTriangleByImageDataWithZBuffer, DrawTriangleInGrid, DrawTriangleInGridWithZBuffer, DrawTriangleInGridWithZBufferAndCache, DrawTriangleWithZBufferByCavasAPI, Hex2Rgb, InitCacheCtx, InitUtilsCtx, InitZBuffer } from './utils';
 import nano_cg_experiment_page from '../nano_software_renderer_page.vue'
 import uiSetting from '../ui-setting';

@@ -218,10 +218,10 @@ export const DrawLineByBresenham = (
                 P.Z += verts[i][2]*bcScreen[i];
                 pNormal[i] = tNormals[0][i]*bcScreen[0] + tNormals[1][i]*bcScreen[1] + tNormals[2][i]*bcScreen[2] ;
             }
-            // pUV[0] = vertsUV[0][0]*bcScreen[0] + vertsUV[1][0]*bcScreen[1] + vertsUV[2][0]*bcScreen[2]
-            // pUV[1] = vertsUV[0][1]*bcScreen[0] + vertsUV[1][1]*bcScreen[1] + vertsUV[2][1]*bcScreen[2]
+            pUV[0] = vertsUV[0][0]*bcScreen[0] + vertsUV[1][0]*bcScreen[1] + vertsUV[2][0]*bcScreen[2]
+            pUV[1] = vertsUV[0][1]*bcScreen[0] + vertsUV[1][1]*bcScreen[1] + vertsUV[2][1]*bcScreen[2]
 
-            // color = currentModel.getDiffuseByUV(pUV);
+            color = currentModel.getDiffuseByUV(pUV);
             intensity = vectorMultiply(pNormal,lightDir);
 
             if (zbuffer[Math.floor(P[0]+P[1]* canvasWidth)]<P.Z) {

@@ -4,6 +4,7 @@
         @Init="Init"
         @Render="Render"
         @ModelChange="ModelChange"
+        @DrawModelChange="DrawModelChange"
         ref="page" 
     /> 
 </template>
@@ -11,7 +12,7 @@
 <script lang='ts'>
 import { Model } from '../../classes/model';
 import { defineComponent, ref} from 'vue';
-import {Vector3} from '/src/classes/vector3'
+import { Vector3 } from '../../classes/vector3';
 import { DrawGrid, DrawTriangleByCanvasAPI, DrawTriangleByImageData, DrawTriangleInGrid, Hex2Rgb, InitGridBuffer } from './utils';
 import nano_cg_experiment_page from '../nano_software_renderer_page.vue'
 import { Point } from '../../classes/point';
@@ -174,13 +175,17 @@ export default defineComponent({
         const ModelChange = ()=>{
             facesCache = []
         }
-
+        //while draw model changed.
+        const DrawModelChange = ()=>{
+            Render();
+        }
         return{
             desData,
             page,
             Init,
             Render,
-            ModelChange
+            ModelChange,
+            DrawModelChange
         }
     }
 })

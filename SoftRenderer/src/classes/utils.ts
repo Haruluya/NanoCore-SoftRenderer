@@ -446,8 +446,6 @@ export const DrawTriangleInGrid = (ctx:CanvasRenderingContext2D,gridSize:number,
     ET = [];
 }
 
-
-
 const MAX_DEEP = 9999;
 const MIN_DEEP = -9999;
 

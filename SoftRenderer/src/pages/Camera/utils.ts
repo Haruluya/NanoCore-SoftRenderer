@@ -67,6 +67,7 @@ export const DrawPointByImgData = (
 
 export const DrawTriangleByImageDataWithZBuffer = (
     imgData:ImageData,
+    lightDir:Vector3,
     verts:Array<Vector3>,
     tNormals:Array<Vector3>,
     color:Vector3,
@@ -172,7 +173,7 @@ export const DrawTriangleByImageDataWithZBuffer = (
                 }
 
    
-                DrawLineByBresenham(imgData,new Point(x0,y),new Point(x1, y),vertsArray,tNormalsArray,color);
+                DrawLineByBresenham(imgData,lightDir,new Point(x0,y),new Point(x1, y),vertsArray,tNormalsArray,color);
             }
             arr = [];
         }
@@ -180,11 +181,12 @@ export const DrawTriangleByImageDataWithZBuffer = (
     ET = [];
 }
 
-let lightDir = new Vector3(0,0,1)
+
 let pNormal = new Vector3(0,0,0);
 let P = new Vector3(0,0,0);
 export const DrawLineByBresenham = (
     imgData:ImageData,
+    lightDir:Vector3,
     beginPoint:Array<number>,
     endPoint:Array<number>,
     verts:Array<Array<number>>,

@@ -68,7 +68,7 @@ import { degToRad, getTransformMatrix, inverse, lookAt, matrixMutiply, perspecti
     @des:This component is used to make the source code more concise.
 */
 export default defineComponent({
-    name: 'DrawFrame',
+    name: 'softwareRenderer',
     props:{
         prop_des_data:{
             type:Object,
@@ -81,6 +81,13 @@ export default defineComponent({
             },
             required:true
         },
+        prop_page_config:{
+            type:Object,
+            default:{
+                mutiMode:true,
+                offset:true,
+            }
+        }
     },
     setup(props,context){
         //origin canvas. 
@@ -151,12 +158,11 @@ export default defineComponent({
         let modelData:{
             [index:string]:Object;
         } = {
-            dog,
             assassin,
             cube,
             head
         };
-        const modelFileData = ["head","cube","assassin","dog"];
+        const modelFileData = ["head","cube","assassin"];
         const drawModelData = ["ImgData","CanvasApi","Grid" ];
 
         //ui
@@ -216,9 +222,8 @@ export default defineComponent({
             ctx.clearRect(0,0,canvas.width,canvas.height)
 
 
-            //section render.
+            //section render.   
             context.emit("Render");
-
             //debug.
             debugLog("FPS",1000 / (Date.now() - beforeTime) + '')
             debugLog("Grid","GridX: " + gridx + '.'+ "  GridY: " + gridy)
@@ -240,15 +245,6 @@ export default defineComponent({
                     type:"select",id:"modelFile",default:sectionParams.modelFile, value:modelFileData,
                     callback: uiSetting.globalUiCallbacks.updateValue(sectionParams,Render,"modelFile")
                 },
-                {
-                    type:"select",id:"drawModel",default:sectionParams.drawModel, value:drawModelData,
-                    callback: uiSetting.globalUiCallbacks.updateValue(sectionParams,Render,"drawModel")
-                },
-               
-                { 
-                    type: "slider-vector", id: "offset", value: sectionParams.offset, min: { x: -500, y: -500 }, max: { x: 500, y: 500 }, 
-                    callback: uiSetting.globalUiCallbacks.updatePoint(sectionParams,Render,"offset") 
-                },
                 { 
                     type: "color", id: "color", default: sectionParams.color, value:sectionParams.color,
                     callback: uiSetting.globalUiCallbacks.updateValue(sectionParams, Render,"color") 
@@ -257,9 +253,27 @@ export default defineComponent({
             sectionUI.value.forEach((e)=>{
                 ui.push(e);
             })
+            //mutimode.
+            if(props.prop_page_config.mutiMode){
+                ui.push(
+                    {
+                    type:"select",id:"drawModel",default:sectionParams.drawModel, value:drawModelData,
+                    callback: uiSetting.globalUiCallbacks.updateValue(sectionParams,Render,"drawModel")
+                },
+                )
+            }
+            //offset.
+            if(props.prop_page_config.offset){
+                ui.push(
+                    { 
+                    type: "slider-vector", id: "offset", value: sectionParams.offset, min: { x: -500, y: -500 }, max: { x: 500, y: 500 }, 
+                    callback: uiSetting.globalUiCallbacks.updatePoint(sectionParams,Render,"offset") 
+                },
+                )
+            }
 
             //grid model.
-            if(sectionParams.drawModel == 1){
+            if(sectionParams.drawModel == 2){
                 ui.push(   
                     {
                     type:"slider", id:"girdSize", value: sectionParams.girdSize, min:1, max:100, 

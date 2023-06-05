@@ -9,5 +9,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, '/src'),
     },
+  },
+  base:"/NanoCore-SoftRenderer", 
+  build: {
+    outDir: 'docs' 
   }
 })

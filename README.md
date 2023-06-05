@@ -21,4 +21,10 @@ git clone https://github.com/Haruluya/NanoCore-SoftRenderer.git
 
 ### Presentation
 
+![image-20230605140850081](F:\Note-Haruluya\Project\NanoCore-SoftRenderer\assets\image-20230605140850081.png)
+
+
+
+
+
 ![image-20221113170409729](./Document/images/image-20221113170409729.png)

@@ -7,8 +7,6 @@ const menuData = [
   {name:"ZBuffer",link:"zbuffer"},
   {name:"Camera",link:"camera"},
   {name:"Texture",link:"texture"},
-  {name:"Shader",link:"shader"},
-  {name:"BlinePhone",link:"blinephone"},
 ]
 
 </script>

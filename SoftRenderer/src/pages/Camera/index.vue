@@ -1,6 +1,7 @@
 <template>
     <nano_cg_experiment_page 
         :prop_des_data="desData" 
+        :prop_page_config="{mutiMode:false,offset:false}"
         @Init="Init"
         @Render="Render"
         @ModelChange="ModelChange"
@@ -12,13 +13,14 @@
 <script lang='ts'>
 import { Model } from '../../classes/model';
 import { defineComponent, ref} from 'vue';
-import {Vector3} from '/src/classes/vector3'
+import {Vector3} from '../../classes/vector3'
 import { ClearBuffer, DrawModelByImageDataWithZBufferAndCache, DrawTriangleByImageDataWithZBuffer, DrawTriangleInGrid, DrawTriangleInGridWithZBuffer, DrawTriangleInGridWithZBufferAndCache, DrawTriangleWithZBufferByCavasAPI, Hex2Rgb, InitCacheCtx, InitZBuffer } from './utils';
 import nano_cg_experiment_page from '../nano_software_renderer_page.vue'
 import uiSetting from '../ui-setting';
 import { m2v4, matrixMutiply, vectorCross, vectorMultiply, vectorNormalize, vectorSubtract } from '../../classes/math';
 import { Vector4 } from '../../classes/vector4';
 import { CameraCache } from '../../classes/cameraCache';
+
 const desData = {
     category: "SoftwareRenderer",
     name: "Camera",
@@ -114,6 +116,7 @@ export default defineComponent({
 
             let points:Array<Vector3> = [];
             let worldPoint:Vector4 =  new Vector3(0,0,0);
+            
             if (!cacheOver){
                 let worldVec4:Array<Vector4> = [];
                 let tNormals:Array<Vector3> = [];
@@ -136,23 +139,23 @@ export default defineComponent({
 
                     }
                     cameraCache.push({worldPoints:worldVec4,vertNormals:tNormals})
-                    initFun(...args,points,tNormals,color);      
+                    initFun(...args,lightDir,points,tNormals,color);      
 
                 });
                 cacheOver = true;
             }else{
                 //with cache.
-                console.log("cache")
+                console.log("with cache")
                 ClearBuffer();
                 cameraCache.forEach(e=>{
                     points = [];
                     for (let j = 0; j < 3; j++){
                         worldPoint = m2v4(matrixMutiply(mvp,e.worldPoints[j].getMatrix()));
                         points.push(
-                            worldPoint.getVec3().toIntVec(),
+                            worldPoint.getVec3().toIntVec()
                         )
                     }
-                    DrawTriangleByImageDataWithZBuffer(imgData,points,e.vertNormals,color);      
+                    DrawTriangleByImageDataWithZBuffer(imgData,lightDir,points,e.vertNormals,color);      
                 })
                 
             }

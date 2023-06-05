@@ -22,5 +22,4 @@ export class Edge {
     set Dx(dx:number){this.dx = dx;}
     get Ymax():number{return this.ymax;}
     set Ymax(ymax:number){this.ymax = ymax;}
-
 }

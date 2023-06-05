@@ -128,9 +128,8 @@ export default defineComponent({
                     cacheOver = true;
                 }else{
                     //with cache.
-                    console.log("cache")
+                    console.log("with cache")
                     let offset = page.value.getOffset();
-                    console.log(sectionParams.lightDir)
 
                     // do not use ref of page for params.
                     let lightDir = new Vector3(sectionParams.lightDir[0],sectionParams.lightDir[1],sectionParams.lightDir[2])
