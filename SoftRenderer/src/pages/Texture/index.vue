@@ -21,7 +21,7 @@ import { m2v4, matrixMutiply, vectorCross, vectorMultiply, vectorNormalize, vect
 import { Vector4 } from '../../classes/vector4';
 import { TextureCache } from '../../classes/textureCache';
 
-import diffuse from "../../../static/obj/head/diffuse.png"
+import diffuse from "../../../public/static/obj/head/diffuse.png"
 import { Vector2 } from '/classes/vector2';
 const desData = {
     category: "SoftwareRenderer",

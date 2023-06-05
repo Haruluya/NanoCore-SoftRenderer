@@ -1,5 +1,5 @@
 # NanoCore-SoftRenderer
-A basic soft renderer based on typescript.
+A basic software renderer based on typescript.
 
 ### Introduction 
 
@@ -21,7 +21,7 @@ git clone https://github.com/Haruluya/NanoCore-SoftRenderer.git
 
 ### Presentation
 
-![image-20230605140850081](F:\Note-Haruluya\Project\NanoCore-SoftRenderer\assets\image-20230605140850081.png)
+![image-20230605140850081](./Document/images/image-20230605140850081.png)
 
 
 

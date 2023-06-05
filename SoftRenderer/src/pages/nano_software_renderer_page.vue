@@ -52,10 +52,10 @@
 
 </template>
 <script lang="ts">
-import dog from  '../../static/obj/dog/dog'
-import assassin from '../../static/obj/assassin/assassin'
-import cube from  '../../static/obj/cube/cube'
-import head from  '../../static/obj/head/head'
+import dog from  '../../public/static/obj/dog/dog'
+import assassin from '../../public/static/obj/assassin/assassin'
+import cube from  '../../public/static/obj/cube/cube'
+import head from  '../../public/static/obj/head/head'
 
 import { Model } from '../classes/model';
 import { defineComponent,defineExpose, reactive, ref,onMounted, computed,nextTick} from 'vue';
